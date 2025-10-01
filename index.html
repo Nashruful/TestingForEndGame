@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Join</title></head>
+<body>
+  <input id="name" placeholder="Your name"/>
+  <input id="code" placeholder="Room code"/>
+  <button id="join">Join</button>
+  <div id="status"></div>
+
+<script>
+const base = 'http://localhost:3000';
+
+document.getElementById('join').onclick = async () => {
+  const name = document.getElementById('name').value || 'Player';
+  const code = document.getElementById('code').value.trim().toUpperCase();
+  if (!code) { alert('Enter code'); return; }
+  try {
+    const resp = await fetch(base + '/rooms/' + encodeURIComponent(code) + '/join', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const j = await resp.json();
+    document.getElementById('status').innerText = JSON.stringify(j);
+  } catch (e) {
+    document.getElementById('status').innerText = e.toString();
+  }
+};
+</script>
+</body>
+</html>
