@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PartyPack • MVP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0f1a;
+            --ink: #f7f7fb;
+            --muted: #a1a7c5;
+            --line: rgba(255,255,255,.12);
+            --accent: #7c5cff;
+            --accent2: #38e1ae
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(1200px 800px at 15% 15%, #1b1c31, #0e0f1a);
+            color: var(--ink);
+            font-family: Inter,system-ui,sans-serif
+        }
+
+        .wrap {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 28px
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px
+        }
+
+        .brand {
+            font-family: Fredoka;
+            font-weight: 700;
+            font-size: 26px
+        }
+
+        .badge {
+            font-family: Fredoka;
+            background: var(--accent);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 12px;
+            letter-spacing: 1px
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px
+        }
+
+        .two {
+            grid-template-columns: 1.2fr .8fr
+        }
+
+        .card {
+            background: linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 12px 40px rgba(0,0,0,.3)
+        }
+
+        h1, h2 {
+            font-family: Fredoka;
+            margin: 0 0 10px
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: var(--muted);
+            margin: 10px 0 6px
+        }
+
+        input, textarea, button {
+            font: inherit
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: #0f1122;
+            color: var(--ink)
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical
+        }
+
+        button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .05s ease, box-shadow .2s ease
+        }
+
+            button:hover {
+                transform: translateY(-1px)
+            }
+
+            button.ghost {
+                background: transparent;
+                border: 1px solid var(--line)
+            }
+
+        .stage {
+            display: none
+        }
+
+            .stage.active {
+                display: block
+            }
+
+        .players {
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(160px,1fr));
+            gap: 10px
+        }
+
+        .pill {
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #0f1122
+        }
+
+        .me {
+            border-color: var(--accent2);
+            box-shadow: inset 0 0 0 1px rgba(56,225,174,.35);
+            font-weight: 600
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .timer {
+            font-family: Fredoka;
+            font-size: 18px
+        }
+
+        .answerBtn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            margin: 8px 0;
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #0f1122;
+            color: var(--ink);
+            cursor: pointer
+        }
+
+            .answerBtn.selected {
+                border-color: var(--accent2);
+                box-shadow: inset 0 0 0 1px rgba(56,225,174,.35)
+            }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center
+        }
+
+        .err {
+            background: #2a1120;
+            border: 1px solid #ff5c8a;
+            color: #ffd5e3;
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-top: 10px;
+            display: none
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="header">
+            <div class="brand">PartyPack<span class="muted">.demo</span></div>
+            <div>Room <span id="roomCodeHdr" class="badge">—</span></div>
+        </div>
+
+        <div class="grid two">
+            <!-- Main column -->
+            <div class="grid">
+                <!-- JOIN / CREATE -->
+                <section id="stage-join" class="stage active card">
+                    <h1>Join or Create</h1>
+                    <label>Your name</label>
+                    <input id="name" placeholder="Player">
+                    <label>Room code</label>
+                    <input id="code" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:2px">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                        <button id="joinBtn">Join</button>
+                        <button id="createBtn" class="ghost">Create Room</button>
+                    </div>
+                    <div id="joinStatus" class="muted" style="margin-top:8px"></div>
+                    <div id="errBox" class="err"></div>
+                </section>
+
+                <!-- ANSWER -->
+                <section id="stage-answer" class="stage card">
+                    <h2>Your Answer</h2>
+                    <div class="row">
+                        <div id="promptDisplay" class="muted" style="font-size:18px"></div>
+                        <div id="countdown" class="timer">⏳ —</div>
+                    </div>
+                    <textarea id="answerText" placeholder="Type your funniest answer..."></textarea>
+                    <button id="submitAnswerBtn">Submit Answer</button>
+                    <div id="answerStatus" class="muted" style="margin-top:8px"></div>
+                </section>
+
+                <!-- VOTE -->
+                <section id="stage-vote" class="stage card">
+                    <h2>Vote</h2>
+                    <div class="row">
+                        <div id="promptDisplayVote" class="muted" style="font-size:18px"></div>
+                        <div id="countdownVote" class="timer">⏳ —</div>
+                    </div>
+                    <div id="answersList"></div>
+                    <button id="submitVoteBtn">Submit Vote</button>
+                    <div id="voteStatus" class="muted" style="margin-top:8px"></div>
+                </section>
+
+                <!-- SCORE -->
+                <section id="stage-score" class="stage card">
+                    <h2>Scoreboard</h2>
+                    <div id="scoreboard"></div>
+                    <div class="muted" style="margin-top:8px">Next round will return to lobby automatically.</div>
+                </section>
+            </div>
+
+            <!-- Side column: lobby & host -->
+            <aside class="card">
+                <h2 style="margin:0 0 10px">Lobby</h2>
+                <div class="muted">Code <span id="roomCode" class="badge">—</span></div>
+                <div class="players" id="players" style="margin-top:12px"></div>
+                <hr style="border-color:var(--line);margin:16px 0">
+                <h3 style="margin:0 0 8px">Host</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button id="startRandomBtn">Start Round (Random Prompt)</button>
+                    <button id="forceVoteBtn" class="ghost">Force Vote</button>
+                    <button id="tallyBtn" class="ghost">Tally</button>
+                </div>
+                <div id="hostStatus" class="muted" style="margin-top:8px"></div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    <script>
+        /* ===== Config ===== */
+        const base = 'https://endgame-back-end.onrender.com'; // ← SET THIS to your Render URL
+        let socket;
+        try {
+            socket = io(base, { transports: ['websocket'] });
+        } catch (e) {
+            showErr("Socket.io failed to load. Check your internet and the Socket.IO script tag.");
+        }
+
+        /* ===== Helpers ===== */
+        let me = JSON.parse(sessionStorage.getItem('session') || 'null'); // {code, playerId?, name?}
+        let selectedVote = null;
+        let countdownTick = null;
+
+        function $(id) { return document.getElementById(id); }
+        function stage(id) { document.querySelectorAll('.stage').forEach(s => s.classList.remove('active')); $(id).classList.add('active'); }
+        function setHdr(code) { $('roomCodeHdr').textContent = code || '—'; $('roomCode').textContent = code || '—'; }
+        function showErr(msg) { const b = $('errBox'); if (!b) return; b.style.display = 'block'; b.textContent = msg; }
+
+        /* ===== Renderers ===== */
+        function renderPlayers(room) {
+            const wrap = $('players'); wrap.innerHTML = '';
+            (room.players || []).forEach(p => {
+                const div = document.createElement('div');
+                const meTag = (me && p.id === me.playerId) ? ' (you)' : '';
+                div.className = 'pill' + (meTag ? ' me' : '');
+                div.textContent = p.name + meTag;
+                wrap.appendChild(div);
+            });
+        }
+        function startCountdown(el, endsAt) {
+            if (countdownTick) clearInterval(countdownTick);
+            function one() {
+                if (!endsAt) { el.textContent = '⏳ —'; return; }
+                const diff = Math.max(0, Math.floor((endsAt - Date.now()) / 1000));
+                el.textContent = `⏳ ${diff}s`;
+            }
+            one();
+            countdownTick = setInterval(one, 1000);
+        }
+        function renderVoteUI(room) {
+            $('promptDisplayVote').textContent = room.round?.prompt || '';
+            const answersWrap = $('answersList'); answersWrap.innerHTML = '';
+            selectedVote = null;
+            const entries = Object.entries(room.round?.answers || {}).filter(([pid]) => !me || pid !== me.playerId);
+            entries.forEach(([pid, text]) => {
+                const b = document.createElement('button');
+                b.className = 'answerBtn'; b.textContent = text;
+                b.onclick = () => { selectedVote = pid; document.querySelectorAll('.answerBtn').forEach(x => x.classList.remove('selected')); b.classList.add('selected'); };
+                answersWrap.appendChild(b);
+            });
+        }
+        function renderScore(room) {
+            const sc = $('scoreboard'); sc.innerHTML = '';
+            const nameById = Object.fromEntries((room.players || []).map(p => [p.id, p.name]));
+            const ans = room.round?.answers || {};
+            const tallies = room.round?.tallies || {};
+            const rows = Object.keys(ans).map(pid => ({ pid, name: nameById[pid] || pid, answer: ans[pid], votes: tallies[pid] || 0 }))
+                .sort((a, b) => b.votes - a.votes);
+            rows.forEach(r => {
+                const row = document.createElement('div');
+                row.className = 'row'; row.style.border = '1px solid var(--line)'; row.style.borderRadius = '12px'; row.style.padding = '12px'; row.style.background = '#0f1122'; row.style.margin = '8px 0';
+                row.innerHTML = `<div><div style="font-weight:600">${r.name}</div><div class="muted">${r.answer}</div></div><div class="badge">${r.votes} vote(s)</div>`;
+                sc.appendChild(row);
+            });
+        }
+
+        /* ===== Socket → UI ===== */
+        if (socket) {
+            socket.on('connect', () => {
+                if (me?.code) socket.emit('sub', { code: me.code });
+            });
+            socket.on('room', (room) => {
+                setHdr(room.code);
+                renderPlayers(room);
+                const phase = room.round?.phase;
+                if (phase === 'lobby') {
+                    stage('stage-join');
+                } else if (phase === 'answer') {
+                    $('promptDisplay').textContent = room.round.prompt || '';
+                    startCountdown($('countdown'), room.round.endsAt);
+                    stage('stage-answer');
+                } else if (phase === 'vote') {
+                    renderVoteUI(room);
+                    startCountdown($('countdownVote'), room.round.endsAt);
+                    stage('stage-vote');
+                } else if (phase === 'score') {
+                    renderScore(room);
+                    startCountdown($('countdownVote'), null);
+                    stage('stage-score');
+                }
+            });
+        }
+
+        /* ===== Actions ===== */
+        $('createBtn').onclick = async () => {
+            hideErr();
+            try {
+                const r = await fetch(`${base}/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Host' }) });
+                const j = await r.json();
+                if (!j.success) { $('joinStatus').textContent = 'Create failed.'; return; }
+                $('code').value = j.code;
+                setHdr(j.code);
+                me = { code: j.code };                // host doesn't need playerId to control phases
+                sessionStorage.setItem('session', JSON.stringify(me));
+                socket && socket.emit('sub', { code: j.code });
+                $('joinStatus').textContent = `Room created: ${j.code}`;
+            } catch (e) { showErr(`Create error: ${e.message}`); }
+        };
+
+        $('joinBtn').onclick = async () => {
+            hideErr();
+            const code = $('code').value.trim().toUpperCase();
+            const name = ($('name').value || 'Player').trim();
+            if (!code) { $('joinStatus').textContent = 'Enter a room code.'; return; }
+            try {
+                const r = await fetch(`${base}/rooms/${encodeURIComponent(code)}/join`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name })
+                });
+                const j = await r.json();
+                if (!j.success) { $('joinStatus').textContent = `Join failed: ${j.error}`; return; }
+                me = { code, playerId: j.playerId, name };
+                sessionStorage.setItem('session', JSON.stringify(me));
+                socket && socket.emit('sub', { code });
+                $('joinStatus').textContent = 'Joined! Wait for the host…';
+            } catch (e) { showErr(`Join error: ${e.message}`); }
+        };
+
+        $('startRandomBtn').onclick = async () => {
+            hideErr();
+            if (!me?.code) return alert('Create or join a room first');
+            try {
+                const r = await fetch(`${base}/rooms/${encodeURIComponent(me.code)}/prompt`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({})
+                });
+                const j = await r.json();
+                $('hostStatus').textContent = j.success ? 'Round started with a random prompt.' : (j.error || 'error');
+            } catch (e) { showErr(`Start error: ${e.message}`); }
+        };
+
+        $('submitAnswerBtn').onclick = async () => {
+            hideErr();
+            if (!me?.code) return;
+            if (!me?.playerId) { $('answerStatus').textContent = 'Join as a player to submit.'; return; }
+            const text = $('answerText').value.trim();
+            if (!text) { $('answerStatus').textContent = 'Type an answer first.'; return; }
+            try {
+                const r = await fetch(`${base}/rooms/${encodeURIComponent(me.code)}/answer`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerId: me.playerId, text })
+                });
+                const j = await r.json();
+                $('answerStatus').textContent = j.success ? 'Submitted! Wait for voting…' : (j.error || 'error');
+                if (j.success) $('answerText').value = '';
+            } catch (e) { showErr(`Answer error: ${e.message}`); }
+        };
+
+        $('forceVoteBtn').onclick = async () => {
+            hideErr();
+            if (!me?.code) return;
+            try {
+                await fetch(`${base}/rooms/${encodeURIComponent(me.code)}/phase`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: 'vote' }) });
+            } catch (e) { showErr(`Phase error: ${e.message}`); }
+        };
+
+        $('submitVoteBtn').onclick = async () => {
+            hideErr();
+            if (!me?.code) return;
+            if (!me?.playerId) { $('voteStatus').textContent = 'Join as a player to vote.'; return; }
+            if (!selectedVote) { $('voteStatus').textContent = 'Pick an answer first.'; return; }
+            try {
+                const r = await fetch(`${base}/rooms/${encodeURIComponent(me.code)}/vote`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerId: me.playerId, targetId: selectedVote })
+                });
+                const j = await r.json();
+                $('voteStatus').textContent = j.success ? 'Vote submitted!' : (j.error || 'error');
+            } catch (e) { showErr(`Vote error: ${e.message}`); }
+        };
+
+        $('tallyBtn').onclick = async () => {
+            hideErr();
+            if (!me?.code) return;
+            try {
+                await fetch(`${base}/rooms/${encodeURIComponent(me.code)}/score`, { method: 'POST' });
+            } catch (e) { showErr(`Tally error: ${e.message}`); }
+        };
+
+        function hideErr() { const b = $('errBox'); if (!b) return; b.style.display = 'none'; b.textContent = ''; }
+
+        /* ===== Restore session ===== */
+        (function () {
+            if (me?.code) { $('code').value = me.code; if (me.name) $('name').value = me.name; socket && socket.emit('sub', { code: me.code }); setHdr(me.code); }
+        })();
+    </script>
+</body>
+</html>
