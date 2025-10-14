@@ -1,316 +1,509 @@
-<!-- public/index.html -->
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Simple Quiplike (demo)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px; max-width: 720px; margin: auto; }
-    .hidden { display:none; }
-    .card { border:1px solid #ddd; padding:16px; border-radius:8px; margin-bottom:12px; }
-    button { padding:8px 12px; margin:6px 0; }
-    input[type="text"] { padding:8px; width:100%; box-sizing:border-box; margin-bottom:8px; }
-    textarea { width:100%; height:100px; box-sizing:border-box; padding:8px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiplash Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status {
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+
+        .question-text {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .vote-option {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .vote-option:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .vote-option.selected {
+            border-color: #667eea;
+            background: #e7eaff;
+        }
+
+        .results-list {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .result-item.winner {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-left-color: #fdcb6e;
+        }
+
+        .result-name {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .result-answer {
+            color: #555;
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+
+        .result-votes {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 24px;
+            color: #667eea;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-  <h1>Simple Quiplike — Demo</h1>
+    <div class="container">
+        <!-- Join Screen -->
+        <div id="joinScreen">
+            <h1>🎮 Quiplash</h1>
+            <div class="input-group">
+                <label>Your Name</label>
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+            </div>
+            <div class="input-group">
+                <label>Room Code</label>
+                <input type="text" id="roomCode" placeholder="ABCD" maxlength="4" style="text-transform: uppercase;">
+            </div>
+            <div id="joinError" class="error hidden"></div>
+            <button id="joinBtn">Join Game</button>
+        </div>
 
-  <div id="join" class="card">
-    <h3>Join a room</h3>
-    <label>Your Name</label>
-    <input id="name" type="text" placeholder="Your name" />
-    <label>Room code</label>
-    <input id="code" type="text" placeholder="ABCD" />
-    <div>
-      <button id="joinBtn">Join</button>
-      <button id="createBtn">Create room (be host)</button>
+        <!-- Waiting Screen -->
+        <div id="waitingScreen" class="hidden">
+            <h1>🎮 Quiplash</h1>
+            <h2>Waiting for game to start...</h2>
+            <div class="status" id="waitingStatus">
+                Connected as <strong id="playerNameDisplay"></strong><br>
+                Room: <strong id="roomCodeDisplay"></strong>
+            </div>
+        </div>
+
+        <!-- Answer Screen -->
+        <div id="answerScreen" class="hidden">
+            <h1>🎮 Answer Time!</h1>
+            <div class="question-text" id="questionText"></div>
+            <div class="timer" id="answerTimer">60</div>
+            <div class="input-group">
+                <textarea id="answerInput" placeholder="Type your funny answer here..." maxlength="100"></textarea>
+            </div>
+            <button id="submitAnswerBtn">Submit Answer</button>
+        </div>
+
+        <!-- Voting Screen -->
+        <div id="votingScreen" class="hidden">
+            <h1>🗳️ Vote Time!</h1>
+            <div class="question-text" id="votingQuestion"></div>
+            <h2>Which answer is funnier?</h2>
+            <div class="vote-option" id="option1" data-option="1">
+                <div id="option1Text"></div>
+            </div>
+            <div class="vote-option" id="option2" data-option="2">
+                <div id="option2Text"></div>
+            </div>
+            <button id="submitVoteBtn" disabled>Submit Vote</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="hidden">
+            <h1>🏆 Results!</h1>
+            <div class="question-text" id="resultsQuestion"></div>
+            <div class="results-list" id="resultsList"></div>
+        </div>
     </div>
-    <div id="joinMsg"></div>
-  </div>
 
-  <div id="lobby" class="card hidden">
-    <h3>Lobby — Room <span id="roomCode"></span></h3>
-    <div>Host: <span id="hostName"></span></div>
-    <div>Players (<span id="playerCount"></span>/4):</div>
-    <ul id="playersList"></ul>
-    <div id="ownerControls" style="margin-top:8px;">
-      <button id="startBtn">Start game (only host)</button>
-    </div>
-    <div id="lobbyMsg"></div>
-  </div>
+    <script>
+        const API_URL = 'https://endgame-back-end.onrender.com';
+        
+        let gameState = {
+            playerId: null,
+            roomCode: null,
+            playerName: null,
+            selectedVote: null,
+            option1Id: null,
+            option2Id: null
+        };
 
-  <div id="answer" class="card hidden">
-    <h3>Question</h3>
-    <div id="questionText"></div>
-    <div style="margin-top:8px;">
-      <label>Your answer</label>
-      <textarea id="answerText"></textarea>
-      <div>
-        <button id="submitAnswerBtn">Submit answer</button>
-      </div>
-      <div id="answerMsg"></div>
-    </div>
-    <div>Answers submitted: <span id="answersCount"></span></div>
-    <div>Time left: <span id="timeLeft"></span></div>
-  </div>
+        let pollInterval = null;
+        let timerInterval = null;
 
-  <div id="voting" class="card hidden">
-    <h3>Vote between two answers</h3>
-    <div id="voteQuestion"></div>
-    <div id="pairArea" style="display:flex;gap:12px;margin-top:12px;">
-      <div style="flex:1" class="card">
-        <div id="optAName"></div>
-        <div id="optAAnswer"></div>
-        <button id="voteA">Vote A</button>
-      </div>
-      <div style="flex:1" class="card">
-        <div id="optBName"></div>
-        <div id="optBAnswer"></div>
-        <button id="voteB">Vote B</button>
-      </div>
-    </div>
-    <div id="votesCount">Votes: 0</div>
-    <div id="votingTimeLeft">Time left: <span id="votingTimeLeftSpan"></span></div>
-    <div id="votingMsg"></div>
-  </div>
+        // Join button
+        document.getElementById('joinBtn').addEventListener('click', joinGame);
+        document.getElementById('roomCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
 
-  <div id="results" class="card hidden">
-    <h3>Results</h3>
-    <div id="resultsList"></div>
-    <div><button id="backToJoin">Back to join screen</button></div>
-  </div>
+        // Submit answer button
+        document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
 
-<script>
-const apiBase = 'https://endgame-back-end.onrender.com';
-let pollInterval = null;
-let state = null;
+        // Vote options
+        document.getElementById('option1').addEventListener('click', () => selectVote(1));
+        document.getElementById('option2').addEventListener('click', () => selectVote(2));
+        document.getElementById('submitVoteBtn').addEventListener('click', submitVote);
 
-function el(id){ return document.getElementById(id); }
+        async function joinGame() {
+            const name = document.getElementById('playerName').value.trim();
+            const code = document.getElementById('roomCode').value.trim().toUpperCase();
+            
+            if (!name || !code) {
+                showError('Please enter both name and room code');
+                return;
+            }
 
-function show(id){ document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden')); el(id).classList.remove('hidden'); }
+            try {
+                const response = await fetch(`${API_URL}/rooms/${code}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
 
-function saveLocal(playerId, name, code){ localStorage.setItem('q_playerId', playerId); localStorage.setItem('q_name', name); localStorage.setItem('q_code', code); }
-function loadLocal(){ return { playerId: localStorage.getItem('q_playerId'), name: localStorage.getItem('q_name'), code: localStorage.getItem('q_code') }; }
-function clearLocal(){ localStorage.removeItem('q_playerId'); localStorage.removeItem('q_name'); localStorage.removeItem('q_code'); }
+                const data = await response.json();
 
-async function api(path, opts = {}) {
-  const res = await fetch(apiBase + path, opts);
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error('API error: ' + res.status + ' ' + t);
-  }
-  return res.json();
-}
+                if (data.success) {
+                    gameState.playerId = data.playerId;
+                    gameState.roomCode = code;
+                    gameState.playerName = name;
 
-async function createRoom(name) {
-  const r = await api('/rooms', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ name }) });
-  return r;
-}
+                    document.getElementById('playerNameDisplay').textContent = name;
+                    document.getElementById('roomCodeDisplay').textContent = code;
 
-async function joinRoom(code, name) {
-  const r = await api('/rooms/' + encodeURIComponent(code) + '/join', {
-    method:'POST',
-    headers:{'content-type':'application/json'},
-    body: JSON.stringify({ name })
-  });
-  return r;
-}
+                    showScreen('waitingScreen');
+                    startPolling();
+                } else {
+                    showError(getErrorMessage(data.error));
+                }
+            } catch (error) {
+                showError('Failed to connect to server');
+            }
+        }
 
-async function startRoom(code, ownerToken) {
-  const r = await api('/rooms/' + encodeURIComponent(code) + '/start', {
-    method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ ownerToken })
-  });
-  return r;
-}
+        function startPolling() {
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/status/${gameState.playerId}`);
+                    const data = await response.json();
 
-async function submitAnswer(code, playerId, answer) {
-  return api('/rooms/' + encodeURIComponent(code) + '/answer', {
-    method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ playerId, answer })
-  });
-}
+                    if (data.success) {
+                        if (data.phase === 'answering' && getCurrentScreen() === 'waitingScreen') {
+                            showAnswerScreen();
+                        } else if (data.phase === 'voting' && getCurrentScreen() === 'answerScreen') {
+                            showVotingScreen();
+                        } else if (data.phase === 'results' && getCurrentScreen() === 'votingScreen') {
+                            showResultsScreen();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 2000);
+        }
 
-async function submitVote(code, voterId, votedFor) {
-  return api('/rooms/' + encodeURIComponent(code) + '/vote', {
-    method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ voterId, votedFor })
-  });
-}
+        async function showAnswerScreen() {
+            try {
+                const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/question`);
+                const data = await response.json();
 
-async function getState(code, playerId) {
-  const url = '/rooms/' + encodeURIComponent(code) + '/state' + (playerId ? '?playerId=' + encodeURIComponent(playerId) : '');
-  return api(url);
-}
+                if (data.success) {
+                    document.getElementById('questionText').textContent = data.question;
+                    showScreen('answerScreen');
+                    startAnswerTimer();
+                }
+            } catch (error) {
+                console.error('Failed to load question:', error);
+            }
+        }
 
-function startPolling(code, playerId) {
-  if (pollInterval) clearInterval(pollInterval);
-  fetchAndUpdate(code, playerId);
-  pollInterval = setInterval(()=>fetchAndUpdate(code, playerId), 2000);
-}
+        function startAnswerTimer() {
+            let timeLeft = 60;
+            const timerEl = document.getElementById('answerTimer');
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                
+                if (timeLeft <= 10) {
+                    timerEl.style.color = '#e74c3c';
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitAnswer();
+                }
+            }, 1000);
+        }
 
-async function fetchAndUpdate(code, playerId) {
-  try {
-    const s = await getState(code, playerId);
-    state = s;
-    updateUI(s);
-  } catch (err) {
-    console.error('poll error', err);
-    el('lobbyMsg').innerText = 'Error polling server: ' + err.message;
-  }
-}
+        async function submitAnswer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const answer = document.getElementById('answerInput').value.trim() || 'No answer';
 
-function updateUI(s) {
-  // show lobby or phase screens
-  if (s.phase === 'lobby') {
-    show('lobby');
-    el('roomCode').innerText = s.code;
-    el('hostName').innerText = s.ownerName;
-    el('playerCount').innerText = s.players.length;
-    const ul = el('playersList'); ul.innerHTML = '';
-    s.players.forEach(p => { const li = document.createElement('li'); li.innerText = p.name; ul.appendChild(li); });
-    // show start button only if you're the owner
-    const loc = loadLocal();
-    const isOwner = (loc && loc.name === s.ownerName && loc.playerId === null); // owner created via create flow stores ownerToken not playerId
-    // we can't currently detect owner by playerId since owner used create route; we'll show startBtn only if owner token saved in localStorage
-    const ownerToken = localStorage.getItem('q_ownerToken');
-    el('ownerControls').style.display = ownerToken ? 'block' : 'none';
-  } else if (s.phase === 'answer') {
-    show('answer');
-    el('questionText').innerText = s.question;
-    el('answersCount').innerText = s.answersCount + ' / ' + s.maxPlayers;
-    if (s.answerEndsAt) {
-      const left = Math.max(0, Math.round((s.answerEndsAt - Date.now())/1000));
-      el('timeLeft').innerText = left + 's';
-    } else el('timeLeft').innerText = '';
-    el('answerText').value = s.yourAnswer || '';
-  } else if (s.phase === 'voting') {
-    show('voting');
-    el('voteQuestion').innerText = s.question;
-    el('votesCount').innerText = 'Votes: ' + s.votesCount;
-    if (s.yourPair) {
-      el('optAName').innerText = s.yourPair.a.name || 'A';
-      el('optAAnswer').innerText = s.yourPair.a.answer || '(no answer)';
-      el('optBName').innerText = s.yourPair.b.name || 'B';
-      el('optBAnswer').innerText = s.yourPair.b.answer || '(no answer)';
-      el('voteA').dataset.target = s.yourPair.a.id;
-      el('voteB').dataset.target = s.yourPair.b.id;
-    } else {
-      el('optAName').innerText = '(waiting...)';
-      el('optAAnswer').innerText = '';
-      el('optBName').innerText = '';
-      el('optBAnswer').innerText = '';
-    }
-    if (s.votingEndsAt) {
-      const left = Math.max(0, Math.round((s.votingEndsAt - Date.now())/1000));
-      el('votingTimeLeftSpan').innerText = left + 's';
-    }
-  } else if (s.phase === 'results') {
-    show('results');
-    const out = el('resultsList'); out.innerHTML = '';
-    (s.results || []).forEach(r => {
-      const d = document.createElement('div');
-      d.innerText = r.name + ' — ' + (r.answer || '(no answer)') + ' — points: ' + r.score;
-      out.appendChild(d);
-    });
-  }
-}
+            try {
+                await fetch(`${API_URL}/rooms/${gameState.roomCode}/answer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        playerId: gameState.playerId,
+                        answer: answer
+                    })
+                });
 
-// event handlers
-el('createBtn').addEventListener('click', async () => {
-  const name = el('name').value.trim() || 'Host';
-  try {
-    const r = await createRoom(name);
-    // store ownerToken for starting
-    localStorage.setItem('q_ownerToken', r.ownerToken);
-    // create a pseudo-player entry for the host UI (host does not have a playerId for this minimal flow)
-    localStorage.setItem('q_name', name);
-    localStorage.setItem('q_code', r.code);
-    // open lobby (we must poll without playerId)
-    startPolling(r.code, null);
-    el('lobbyMsg').innerText = 'Room created. Tell players code: ' + r.code;
-  } catch (err) {
-    el('joinMsg').innerText = 'Error creating room: ' + err.message;
-  }
-});
+                document.getElementById('submitAnswerBtn').disabled = true;
+                document.getElementById('submitAnswerBtn').textContent = 'Waiting for others...';
+            } catch (error) {
+                console.error('Failed to submit answer:', error);
+            }
+        }
 
-el('joinBtn').addEventListener('click', async () => {
-  const name = el('name').value.trim() || 'Player';
-  const code = (el('code').value || '').trim().toUpperCase();
-  if (!code) { el('joinMsg').innerText = 'Enter room code'; return; }
-  try {
-    const r = await joinRoom(code, name);
-    saveLocal(r.playerId, name, code);
-    localStorage.removeItem('q_ownerToken');
-    startPolling(code, r.playerId);
-    el('joinMsg').innerText = 'Joined as ' + name;
-  } catch (err) {
-    el('joinMsg').innerText = 'Join error: ' + err.message;
-  }
-});
+        async function showVotingScreen() {
+            try {
+                const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/vote/${gameState.playerId}`);
+                const data = await response.json();
 
-el('startBtn').addEventListener('click', async () => {
-  const ownerToken = localStorage.getItem('q_ownerToken');
-  const code = localStorage.getItem('q_code');
-  if (!ownerToken || !code) { el('lobbyMsg').innerText = 'No owner token found.'; return; }
-  try {
-    await startRoom(code, ownerToken);
-    el('lobbyMsg').innerText = 'Game started.';
-    startPolling(code, localStorage.getItem('q_playerId'));
-  } catch (err) {
-    el('lobbyMsg').innerText = 'Start error: ' + err.message;
-  }
-});
+                if (data.success) {
+                    document.getElementById('votingQuestion').textContent = data.question;
+                    document.getElementById('option1Text').textContent = data.option1;
+                    document.getElementById('option2Text').textContent = data.option2;
+                    
+                    gameState.option1Id = data.option1Id;
+                    gameState.option2Id = data.option2Id;
+                    
+                    showScreen('votingScreen');
+                }
+            } catch (error) {
+                console.error('Failed to load voting options:', error);
+            }
+        }
 
-el('submitAnswerBtn').addEventListener('click', async () => {
-  const loc = loadLocal();
-  const code = loc.code;
-  const playerId = loc.playerId;
-  const answer = el('answerText').value.trim();
-  if (!answer) { el('answerMsg').innerText = 'Enter answer first.'; return; }
-  try {
-    await submitAnswer(code, playerId, answer);
-    el('answerMsg').innerText = 'Answer submitted.';
-  } catch (err) {
-    el('answerMsg').innerText = 'Submit error: ' + err.message;
-  }
-});
+        function selectVote(option) {
+            gameState.selectedVote = option;
+            
+            document.getElementById('option1').classList.remove('selected');
+            document.getElementById('option2').classList.remove('selected');
+            
+            document.getElementById(`option${option}`).classList.add('selected');
+            document.getElementById('submitVoteBtn').disabled = false;
+        }
 
-el('voteA').addEventListener('click', async (ev) => {
-  const target = ev.currentTarget.dataset.target;
-  const loc = loadLocal();
-  try {
-    await submitVote(loc.code, loc.playerId, target);
-    el('votingMsg').innerText = 'Voted.';
-  } catch (err) {
-    el('votingMsg').innerText = 'Vote error: ' + err.message;
-  }
-});
-el('voteB').addEventListener('click', async (ev) => {
-  const target = ev.currentTarget.dataset.target;
-  const loc = loadLocal();
-  try {
-    await submitVote(loc.code, loc.playerId, target);
-    el('votingMsg').innerText = 'Voted.';
-  } catch (err) {
-    el('votingMsg').innerText = 'Vote error: ' + err.message;
-  }
-});
+        async function submitVote() {
+            if (!gameState.selectedVote) return;
 
-el('backToJoin').addEventListener('click', () => {
-  clearLocal();
-  location.reload();
-});
+            const votedForId = gameState.selectedVote === 1 ? gameState.option1Id : gameState.option2Id;
 
-// on load: if local data present, auto-poll
-window.addEventListener('load', () => {
-  const loc = loadLocal();
-  if (loc && loc.code) {
-    // if we have playerId -> joined; otherwise just host view
-    startPolling(loc.code, loc.playerId);
-  } else {
-    show('join');
-  }
-});
-</script>
+            try {
+                await fetch(`${API_URL}/rooms/${gameState.roomCode}/vote`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        playerId: gameState.playerId,
+                        votedFor: votedForId
+                    })
+                });
+
+                document.getElementById('submitVoteBtn').disabled = true;
+                document.getElementById('submitVoteBtn').textContent = 'Waiting for results...';
+            } catch (error) {
+                console.error('Failed to submit vote:', error);
+            }
+        }
+
+        async function showResultsScreen() {
+            try {
+                const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/results`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('resultsQuestion').textContent = data.question;
+                    
+                    const resultsList = document.getElementById('resultsList');
+                    resultsList.innerHTML = '';
+                    
+                    data.results.forEach((result, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'result-item' + (index === 0 ? ' winner' : '');
+                        item.innerHTML = `
+                            <div class="result-name">${index === 0 ? '🏆 ' : ''}${result.name}</div>
+                            <div class="result-answer">"${result.answer}"</div>
+                            <div class="result-votes">${result.votes} vote${result.votes !== 1 ? 's' : ''}</div>
+                        `;
+                        resultsList.appendChild(item);
+                    });
+                    
+                    showScreen('resultsScreen');
+                    if (pollInterval) clearInterval(pollInterval);
+                }
+            } catch (error) {
+                console.error('Failed to load results:', error);
+            }
+        }
+
+        function showScreen(screenId) {
+            ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'resultsScreen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function getCurrentScreen() {
+            const screens = ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'resultsScreen'];
+            return screens.find(id => !document.getElementById(id).classList.contains('hidden'));
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('joinError');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            setTimeout(() => errorEl.classList.add('hidden'), 5000);
+        }
+
+        function getErrorMessage(error) {
+            const messages = {
+                'not_found': 'Room not found',
+                'already_started': 'Game already started',
+                'room_full': 'Room is full'
+            };
+            return messages[error] || 'An error occurred';
+        }
+    </script>
 </body>
 </html>
