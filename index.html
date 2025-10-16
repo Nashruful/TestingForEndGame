@@ -141,40 +141,6 @@
             background: #e7eaff;
         }
 
-        .results-list {
-            margin-top: 20px;
-        }
-
-        .result-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border-left: 5px solid #667eea;
-        }
-
-        .result-item.winner {
-            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-            border-left-color: #fdcb6e;
-        }
-
-        .result-name {
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .result-answer {
-            color: #555;
-            font-style: italic;
-            margin-bottom: 5px;
-        }
-
-        .result-votes {
-            color: #667eea;
-            font-weight: 600;
-        }
-
         .error {
             background: #fee;
             color: #c33;
@@ -190,6 +156,17 @@
             color: #667eea;
             font-weight: 700;
             margin: 20px 0;
+        }
+
+        .round-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -223,6 +200,9 @@
         <!-- Answer Screen -->
         <div id="answerScreen" class="hidden">
             <h1>🎮 Answer Time!</h1>
+            <div style="text-align: center;">
+                <span class="round-badge" id="answerRoundBadge">Round 1</span>
+            </div>
             <div class="question-text" id="questionText"></div>
             <div class="timer" id="answerTimer">60</div>
             <div class="input-group">
@@ -234,6 +214,9 @@
         <!-- Voting Screen -->
         <div id="votingScreen" class="hidden">
             <h1>🗳️ Vote Time!</h1>
+            <div style="text-align: center;">
+                <span class="round-badge" id="votingRoundBadge">Round 1</span>
+            </div>
             <div class="question-text" id="votingQuestion"></div>
             <h2>Which answer is funnier?</h2>
             <div class="vote-option" id="option1" data-option="1">
@@ -245,16 +228,19 @@
             <button id="submitVoteBtn" disabled>Submit Vote</button>
         </div>
 
-        <!-- Results Screen -->
-        <div id="resultsScreen" class="hidden">
-            <h1>🏆 Results!</h1>
-            <div class="question-text" id="resultsQuestion"></div>
-            <div class="results-list" id="resultsList"></div>
+        <!-- Waiting for Results Screen -->
+        <div id="waitingResultsScreen" class="hidden">
+            <h1>⏳ Please Wait</h1>
+            <h2>Results will be shown on the main screen!</h2>
+            <div class="status">
+                The host is displaying the winners.<br>
+                Check the TV/projector screen! 📺
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = 'https://endgame-back-end.onrender.com';
+        const API_URL = 'http://localhost:3000'; // Change this to your Render URL
         
         let gameState = {
             playerId: null,
@@ -262,7 +248,8 @@
             playerName: null,
             selectedVote: null,
             option1Id: null,
-            option2Id: null
+            option2Id: null,
+            currentRound: 0
         };
 
         let pollInterval = null;
@@ -325,12 +312,14 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        if (data.phase === 'answering' && getCurrentScreen() === 'waitingScreen') {
+                        gameState.currentRound = data.currentRound;
+                        
+                        if (data.phase === 'answering' && (getCurrentScreen() === 'waitingScreen' || getCurrentScreen() === 'votingScreen')) {
                             showAnswerScreen();
                         } else if (data.phase === 'voting' && getCurrentScreen() === 'answerScreen') {
                             showVotingScreen();
                         } else if (data.phase === 'results' && getCurrentScreen() === 'votingScreen') {
-                            showResultsScreen();
+                            showWaitingForResults();
                         }
                     }
                 } catch (error) {
@@ -346,6 +335,11 @@
 
                 if (data.success) {
                     document.getElementById('questionText').textContent = data.question;
+                    document.getElementById('answerRoundBadge').textContent = `Round ${data.roundNumber}`;
+                    document.getElementById('answerInput').value = '';
+                    document.getElementById('submitAnswerBtn').disabled = false;
+                    document.getElementById('submitAnswerBtn').textContent = 'Submit Answer';
+                    
                     showScreen('answerScreen');
                     startAnswerTimer();
                 }
@@ -355,8 +349,11 @@
         }
 
         function startAnswerTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
             let timeLeft = 60;
             const timerEl = document.getElementById('answerTimer');
+            timerEl.style.color = '#667eea';
             
             timerInterval = setInterval(() => {
                 timeLeft--;
@@ -402,11 +399,18 @@
 
                 if (data.success) {
                     document.getElementById('votingQuestion').textContent = data.question;
+                    document.getElementById('votingRoundBadge').textContent = `Round ${data.roundNumber}`;
                     document.getElementById('option1Text').textContent = data.option1;
                     document.getElementById('option2Text').textContent = data.option2;
                     
                     gameState.option1Id = data.option1Id;
                     gameState.option2Id = data.option2Id;
+                    gameState.selectedVote = null;
+                    
+                    document.getElementById('option1').classList.remove('selected');
+                    document.getElementById('option2').classList.remove('selected');
+                    document.getElementById('submitVoteBtn').disabled = true;
+                    document.getElementById('submitVoteBtn').textContent = 'Submit Vote';
                     
                     showScreen('votingScreen');
                 }
@@ -441,51 +445,26 @@
                 });
 
                 document.getElementById('submitVoteBtn').disabled = true;
-                document.getElementById('submitVoteBtn').textContent = 'Waiting for results...';
+                document.getElementById('submitVoteBtn').textContent = 'Vote submitted!';
             } catch (error) {
                 console.error('Failed to submit vote:', error);
             }
         }
 
-        async function showResultsScreen() {
-            try {
-                const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/results`);
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('resultsQuestion').textContent = data.question;
-                    
-                    const resultsList = document.getElementById('resultsList');
-                    resultsList.innerHTML = '';
-                    
-                    data.results.forEach((result, index) => {
-                        const item = document.createElement('div');
-                        item.className = 'result-item' + (index === 0 ? ' winner' : '');
-                        item.innerHTML = `
-                            <div class="result-name">${index === 0 ? '🏆 ' : ''}${result.name}</div>
-                            <div class="result-answer">"${result.answer}"</div>
-                            <div class="result-votes">${result.votes} vote${result.votes !== 1 ? 's' : ''}</div>
-                        `;
-                        resultsList.appendChild(item);
-                    });
-                    
-                    showScreen('resultsScreen');
-                    if (pollInterval) clearInterval(pollInterval);
-                }
-            } catch (error) {
-                console.error('Failed to load results:', error);
-            }
+        function showWaitingForResults() {
+            showScreen('waitingResultsScreen');
+            if (pollInterval) clearInterval(pollInterval);
         }
 
         function showScreen(screenId) {
-            ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'resultsScreen'].forEach(id => {
+            ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'waitingResultsScreen'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(screenId).classList.remove('hidden');
         }
 
         function getCurrentScreen() {
-            const screens = ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'resultsScreen'];
+            const screens = ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'waitingResultsScreen'];
             return screens.find(id => !document.getElementById(id).classList.contains('hidden'));
         }
 
