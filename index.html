@@ -1,509 +1,588 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quiplash Game</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
+      .container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
 
-        h1 {
-            color: #667eea;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2em;
-        }
+      h1 {
+        color: #667eea;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2em;
+      }
 
-        h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-        }
+      h2 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.3em;
+      }
 
-        .input-group {
-            margin-bottom: 20px;
-        }
+      .input-group {
+        margin-bottom: 20px;
+      }
 
-        label {
-            display: block;
-            color: #555;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
+      label {
+        display: block;
+        color: #555;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
 
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
 
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
 
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-            font-family: inherit;
-        }
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+      }
 
-        button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+      button {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
 
-        .hidden {
-            display: none;
-        }
+      .hidden {
+        display: none;
+      }
 
-        .status {
-            text-align: center;
-            color: #666;
-            margin: 20px 0;
-            font-size: 16px;
-        }
+      .status {
+        text-align: center;
+        color: #666;
+        margin: 20px 0;
+        font-size: 16px;
+      }
 
-        .question-text {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 18px;
-            color: #333;
-            font-weight: 500;
-        }
+      .question-text {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 18px;
+        color: #333;
+        font-weight: 500;
+      }
 
-        .vote-option {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 3px solid transparent;
-        }
+      .vote-option {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 3px solid transparent;
+      }
 
-        .vote-option:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
-        }
+      .vote-option:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+      }
 
-        .vote-option.selected {
-            border-color: #667eea;
-            background: #e7eaff;
-        }
+      .vote-option.selected {
+        border-color: #667eea;
+        background: #e7eaff;
+      }
 
-        .results-list {
-            margin-top: 20px;
-        }
+      .results-list {
+        margin-top: 20px;
+      }
 
-        .result-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border-left: 5px solid #667eea;
-        }
+      .result-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border-left: 5px solid #667eea;
+      }
 
-        .result-item.winner {
-            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-            border-left-color: #fdcb6e;
-        }
+      .result-item.winner {
+        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        border-left-color: #fdcb6e;
+      }
 
-        .result-name {
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 5px;
-        }
+      .result-name {
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 5px;
+      }
 
-        .result-answer {
-            color: #555;
-            font-style: italic;
-            margin-bottom: 5px;
-        }
+      .result-answer {
+        color: #555;
+        font-style: italic;
+        margin-bottom: 5px;
+      }
 
-        .result-votes {
-            color: #667eea;
-            font-weight: 600;
-        }
+      .result-votes {
+        color: #667eea;
+        font-weight: 600;
+      }
 
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+      .error {
+        background: #fee;
+        color: #c33;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
 
-        .timer {
-            text-align: center;
-            font-size: 24px;
-            color: #667eea;
-            font-weight: 700;
-            margin: 20px 0;
-        }
+      .timer {
+        text-align: center;
+        font-size: 24px;
+        color: #667eea;
+        font-weight: 700;
+        margin: 20px 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <!-- Join Screen -->
-        <div id="joinScreen">
-            <h1>🎮 Quiplash</h1>
-            <div class="input-group">
-                <label>Your Name</label>
-                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
-            </div>
-            <div class="input-group">
-                <label>Room Code</label>
-                <input type="text" id="roomCode" placeholder="ABCD" maxlength="4" style="text-transform: uppercase;">
-            </div>
-            <div id="joinError" class="error hidden"></div>
-            <button id="joinBtn">Join Game</button>
+      <!-- Join Screen -->
+      <div id="joinScreen">
+        <h1>🎮 Quiplash</h1>
+        <div class="input-group">
+          <label>Your Name</label>
+          <input
+            type="text"
+            id="playerName"
+            placeholder="Enter your name"
+            maxlength="20"
+          />
         </div>
+        <div class="input-group">
+          <label>Room Code</label>
+          <input
+            type="text"
+            id="roomCode"
+            placeholder="ABCD"
+            maxlength="4"
+            style="text-transform: uppercase"
+          />
+        </div>
+        <div id="joinError" class="error hidden"></div>
+        <button id="joinBtn">Join Game</button>
+      </div>
 
-        <!-- Waiting Screen -->
-        <div id="waitingScreen" class="hidden">
-            <h1>🎮 Quiplash</h1>
-            <h2>Waiting for game to start...</h2>
-            <div class="status" id="waitingStatus">
-                Connected as <strong id="playerNameDisplay"></strong><br>
-                Room: <strong id="roomCodeDisplay"></strong>
-            </div>
+      <!-- Waiting Screen -->
+      <div id="waitingScreen" class="hidden">
+        <h1>🎮 Quiplash</h1>
+        <h2>Waiting for game to start...</h2>
+        <div class="status" id="waitingStatus">
+          Connected as <strong id="playerNameDisplay"></strong><br />
+          Room: <strong id="roomCodeDisplay"></strong>
         </div>
+      </div>
 
-        <!-- Answer Screen -->
-        <div id="answerScreen" class="hidden">
-            <h1>🎮 Answer Time!</h1>
-            <div class="question-text" id="questionText"></div>
-            <div class="timer" id="answerTimer">60</div>
-            <div class="input-group">
-                <textarea id="answerInput" placeholder="Type your funny answer here..." maxlength="100"></textarea>
-            </div>
-            <button id="submitAnswerBtn">Submit Answer</button>
+      <!-- Answer Screen -->
+      <div id="answerScreen" class="hidden">
+        <h1>🎮 Answer Time!</h1>
+        <div class="question-text" id="questionText"></div>
+        <div class="timer" id="answerTimer">60</div>
+        <div class="input-group">
+          <textarea
+            id="answerInput"
+            placeholder="Type your funny answer here..."
+            maxlength="100"
+          ></textarea>
         </div>
+        <button id="submitAnswerBtn">Submit Answer</button>
+      </div>
 
-        <!-- Voting Screen -->
-        <div id="votingScreen" class="hidden">
-            <h1>🗳️ Vote Time!</h1>
-            <div class="question-text" id="votingQuestion"></div>
-            <h2>Which answer is funnier?</h2>
-            <div class="vote-option" id="option1" data-option="1">
-                <div id="option1Text"></div>
-            </div>
-            <div class="vote-option" id="option2" data-option="2">
-                <div id="option2Text"></div>
-            </div>
-            <button id="submitVoteBtn" disabled>Submit Vote</button>
+      <!-- Voting Screen -->
+      <div id="votingScreen" class="hidden">
+        <h1>🗳️ Vote Time!</h1>
+        <div class="question-text" id="votingQuestion"></div>
+        <h2>Which answer is funnier?</h2>
+        <div class="vote-option" id="option1" data-option="1">
+          <div id="option1Text"></div>
         </div>
+        <div class="vote-option" id="option2" data-option="2">
+          <div id="option2Text"></div>
+        </div>
+        <button id="submitVoteBtn" disabled>Submit Vote</button>
+      </div>
 
-        <!-- Results Screen -->
-        <div id="resultsScreen" class="hidden">
-            <h1>🏆 Results!</h1>
-            <div class="question-text" id="resultsQuestion"></div>
-            <div class="results-list" id="resultsList"></div>
-        </div>
+      <!-- Results Screen -->
+      <div id="resultsScreen" class="hidden">
+        <h1>🏆 Results!</h1>
+        <div class="question-text" id="resultsQuestion"></div>
+        <div class="results-list" id="resultsList"></div>
+      </div>
     </div>
 
     <script>
-        const API_URL = 'https://endgame-back-end.onrender.com';
-        
-        let gameState = {
-            playerId: null,
-            roomCode: null,
-            playerName: null,
-            selectedVote: null,
-            option1Id: null,
-            option2Id: null
-        };
+      const API_URL = "https://endgame-back-end.onrender.com";
 
-        let pollInterval = null;
-        let timerInterval = null;
+      let gameState = {
+        playerId: null,
+        roomCode: null,
+        playerName: null,
+        selectedVote: null,
+        option1Id: null,
+        option2Id: null,
+      };
 
-        // Join button
-        document.getElementById('joinBtn').addEventListener('click', joinGame);
-        document.getElementById('roomCode').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') joinGame();
-        });
+      let pollInterval = null;
+      let timerInterval = null;
 
-        // Submit answer button
-        document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
+      // Join button
+      document.getElementById("joinBtn").addEventListener("click", joinGame);
+      document.getElementById("roomCode").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") joinGame();
+      });
 
-        // Vote options
-        document.getElementById('option1').addEventListener('click', () => selectVote(1));
-        document.getElementById('option2').addEventListener('click', () => selectVote(2));
-        document.getElementById('submitVoteBtn').addEventListener('click', submitVote);
+      // Submit answer button
+      document
+        .getElementById("submitAnswerBtn")
+        .addEventListener("click", submitAnswer);
 
-        async function joinGame() {
-            const name = document.getElementById('playerName').value.trim();
-            const code = document.getElementById('roomCode').value.trim().toUpperCase();
+      // Vote options
+      document
+        .getElementById("option1")
+        .addEventListener("click", () => selectVote(1));
+      document
+        .getElementById("option2")
+        .addEventListener("click", () => selectVote(2));
+      document
+        .getElementById("submitVoteBtn")
+        .addEventListener("click", submitVote);
+
+      async function joinGame() {
+        const name = document.getElementById("playerName").value.trim();
+        const code = document
+          .getElementById("roomCode")
+          .value.trim()
+          .toUpperCase();
+
+        if (!name || !code) {
+          showError("Please enter both name and room code");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/rooms/${code}/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            gameState.playerId = data.playerId;
+            gameState.roomCode = code;
+            gameState.playerName = name;
+
+            document.getElementById("playerNameDisplay").textContent = name;
+            document.getElementById("roomCodeDisplay").textContent = code;
+
+            showScreen("waitingScreen");
+            startPolling();
+          } else {
+            showError(getErrorMessage(data.error));
+          }
+        } catch (error) {
+          showError("Failed to connect to server");
+        }
+      }
+
+      function startPolling() {
+        pollInterval = setInterval(async () => {
+          try {
+            const response = await fetch(
+              `${API_URL}/rooms/${gameState.roomCode}/status/${gameState.playerId}`
+            );
+            const data = await response.json();
+
+            if (data.success) {
+              if (
+                data.phase === "answering" &&
+                getCurrentScreen() !== "answerScreen"
+              ) {
+                showAnswerScreen();
+              } else if (
+                data.phase === "voting" &&
+                getCurrentScreen() !== "votingScreen"
+              ) {
+                showVotingScreen();
+              } else if (
+                data.phase === "results" &&
+                getCurrentScreen() !== "resultsScreen"
+              ) {
+                showResultsScreen();
+              }
+            }
+          } catch (error) {
+            console.error("Polling error:", error);
+          }
+        }, 2000);
+      }
+
+      async function showAnswerScreen() {
+    try {
+        const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/question`);
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('questionText').textContent = data.question;
+
+            // Reset input and button
+            const answerInput = document.getElementById('answerInput');
+            answerInput.value = '';
             
-            if (!name || !code) {
-                showError('Please enter both name and room code');
-                return;
-            }
+            const submitBtn = document.getElementById('submitAnswerBtn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Answer';
 
-            try {
-                const response = await fetch(`${API_URL}/rooms/${code}/join`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    gameState.playerId = data.playerId;
-                    gameState.roomCode = code;
-                    gameState.playerName = name;
-
-                    document.getElementById('playerNameDisplay').textContent = name;
-                    document.getElementById('roomCodeDisplay').textContent = code;
-
-                    showScreen('waitingScreen');
-                    startPolling();
-                } else {
-                    showError(getErrorMessage(data.error));
-                }
-            } catch (error) {
-                showError('Failed to connect to server');
-            }
+            showScreen('answerScreen');
+            startAnswerTimer();
         }
+    } catch (error) {
+        console.error('Failed to load question:', error);
+    }
+}
 
-        function startPolling() {
-            pollInterval = setInterval(async () => {
-                try {
-                    const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/status/${gameState.playerId}`);
-                    const data = await response.json();
 
-                    if (data.success) {
-                        if (data.phase === 'answering' && getCurrentScreen() === 'waitingScreen') {
-                            showAnswerScreen();
-                        } else if (data.phase === 'voting' && getCurrentScreen() === 'answerScreen') {
-                            showVotingScreen();
-                        } else if (data.phase === 'results' && getCurrentScreen() === 'votingScreen') {
-                            showResultsScreen();
-                        }
-                    }
-                } catch (error) {
-                    console.error('Polling error:', error);
-                }
-            }, 2000);
+      function startAnswerTimer() {
+        let timeLeft = 60;
+        const timerEl = document.getElementById("answerTimer");
+
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          timerEl.textContent = timeLeft;
+
+          if (timeLeft <= 10) {
+            timerEl.style.color = "#e74c3c";
+          }
+
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            submitAnswer();
+          }
+        }, 1000);
+      }
+
+      async function submitAnswer() {
+        if (timerInterval) clearInterval(timerInterval);
+
+        const answer =
+          document.getElementById("answerInput").value.trim() || "No answer";
+
+        try {
+          await fetch(`${API_URL}/rooms/${gameState.roomCode}/answer`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              playerId: gameState.playerId,
+              answer: answer,
+            }),
+          });
+
+          document.getElementById("submitAnswerBtn").disabled = true;
+          document.getElementById("submitAnswerBtn").textContent =
+            "Waiting for others...";
+        } catch (error) {
+          console.error("Failed to submit answer:", error);
         }
+      }
 
-        async function showAnswerScreen() {
-            try {
-                const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/question`);
-                const data = await response.json();
+      async function showVotingScreen() {
+        try {
+          const response = await fetch(
+            `${API_URL}/rooms/${gameState.roomCode}/vote/${gameState.playerId}`
+          );
+          const data = await response.json();
 
-                if (data.success) {
-                    document.getElementById('questionText').textContent = data.question;
-                    showScreen('answerScreen');
-                    startAnswerTimer();
-                }
-            } catch (error) {
-                console.error('Failed to load question:', error);
-            }
+          if (data.success) {
+            document.getElementById("votingQuestion").textContent =
+              data.question;
+            document.getElementById("option1Text").textContent = data.option1;
+            document.getElementById("option2Text").textContent = data.option2;
+
+            gameState.option1Id = data.option1Id;
+            gameState.option2Id = data.option2Id;
+
+            showScreen("votingScreen");
+          }
+        } catch (error) {
+          console.error("Failed to load voting options:", error);
         }
+      }
 
-        function startAnswerTimer() {
-            let timeLeft = 60;
-            const timerEl = document.getElementById('answerTimer');
-            
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                timerEl.textContent = timeLeft;
-                
-                if (timeLeft <= 10) {
-                    timerEl.style.color = '#e74c3c';
-                }
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    submitAnswer();
-                }
-            }, 1000);
+      function selectVote(option) {
+        gameState.selectedVote = option;
+
+        document.getElementById("option1").classList.remove("selected");
+        document.getElementById("option2").classList.remove("selected");
+
+        document.getElementById(`option${option}`).classList.add("selected");
+        document.getElementById("submitVoteBtn").disabled = false;
+      }
+
+      async function submitVote() {
+        if (!gameState.selectedVote) return;
+
+        const votedForId =
+          gameState.selectedVote === 1
+            ? gameState.option1Id
+            : gameState.option2Id;
+
+        try {
+          await fetch(`${API_URL}/rooms/${gameState.roomCode}/vote`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              playerId: gameState.playerId,
+              votedFor: votedForId,
+            }),
+          });
+
+          document.getElementById("submitVoteBtn").disabled = true;
+          document.getElementById("submitVoteBtn").textContent =
+            "Waiting for results...";
+        } catch (error) {
+          console.error("Failed to submit vote:", error);
         }
+      }
 
-        async function submitAnswer() {
-            if (timerInterval) clearInterval(timerInterval);
-            
-            const answer = document.getElementById('answerInput').value.trim() || 'No answer';
+      async function showResultsScreen() {
+        try {
+          const response = await fetch(
+            `${API_URL}/rooms/${gameState.roomCode}/results`
+          );
+          const data = await response.json();
 
-            try {
-                await fetch(`${API_URL}/rooms/${gameState.roomCode}/answer`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        playerId: gameState.playerId,
-                        answer: answer
-                    })
-                });
+          if (data.success) {
+            document.getElementById("resultsQuestion").textContent =
+              data.question;
 
-                document.getElementById('submitAnswerBtn').disabled = true;
-                document.getElementById('submitAnswerBtn').textContent = 'Waiting for others...';
-            } catch (error) {
-                console.error('Failed to submit answer:', error);
-            }
-        }
+            const resultsList = document.getElementById("resultsList");
+            resultsList.innerHTML = "";
 
-        async function showVotingScreen() {
-            try {
-                const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/vote/${gameState.playerId}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('votingQuestion').textContent = data.question;
-                    document.getElementById('option1Text').textContent = data.option1;
-                    document.getElementById('option2Text').textContent = data.option2;
-                    
-                    gameState.option1Id = data.option1Id;
-                    gameState.option2Id = data.option2Id;
-                    
-                    showScreen('votingScreen');
-                }
-            } catch (error) {
-                console.error('Failed to load voting options:', error);
-            }
-        }
-
-        function selectVote(option) {
-            gameState.selectedVote = option;
-            
-            document.getElementById('option1').classList.remove('selected');
-            document.getElementById('option2').classList.remove('selected');
-            
-            document.getElementById(`option${option}`).classList.add('selected');
-            document.getElementById('submitVoteBtn').disabled = false;
-        }
-
-        async function submitVote() {
-            if (!gameState.selectedVote) return;
-
-            const votedForId = gameState.selectedVote === 1 ? gameState.option1Id : gameState.option2Id;
-
-            try {
-                await fetch(`${API_URL}/rooms/${gameState.roomCode}/vote`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        playerId: gameState.playerId,
-                        votedFor: votedForId
-                    })
-                });
-
-                document.getElementById('submitVoteBtn').disabled = true;
-                document.getElementById('submitVoteBtn').textContent = 'Waiting for results...';
-            } catch (error) {
-                console.error('Failed to submit vote:', error);
-            }
-        }
-
-        async function showResultsScreen() {
-            try {
-                const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/results`);
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('resultsQuestion').textContent = data.question;
-                    
-                    const resultsList = document.getElementById('resultsList');
-                    resultsList.innerHTML = '';
-                    
-                    data.results.forEach((result, index) => {
-                        const item = document.createElement('div');
-                        item.className = 'result-item' + (index === 0 ? ' winner' : '');
-                        item.innerHTML = `
-                            <div class="result-name">${index === 0 ? '🏆 ' : ''}${result.name}</div>
+            data.results.forEach((result, index) => {
+              const item = document.createElement("div");
+              item.className = "result-item" + (index === 0 ? " winner" : "");
+              item.innerHTML = `
+                            <div class="result-name">${
+                              index === 0 ? "🏆 " : ""
+                            }${result.name}</div>
                             <div class="result-answer">"${result.answer}"</div>
-                            <div class="result-votes">${result.votes} vote${result.votes !== 1 ? 's' : ''}</div>
+                            <div class="result-votes">${result.votes} vote${
+                result.votes !== 1 ? "s" : ""
+              }</div>
                         `;
-                        resultsList.appendChild(item);
-                    });
-                    
-                    showScreen('resultsScreen');
-                    if (pollInterval) clearInterval(pollInterval);
-                }
-            } catch (error) {
-                console.error('Failed to load results:', error);
-            }
-        }
-
-        function showScreen(screenId) {
-            ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'resultsScreen'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
+              resultsList.appendChild(item);
             });
-            document.getElementById(screenId).classList.remove('hidden');
-        }
 
-        function getCurrentScreen() {
-            const screens = ['joinScreen', 'waitingScreen', 'answerScreen', 'votingScreen', 'resultsScreen'];
-            return screens.find(id => !document.getElementById(id).classList.contains('hidden'));
+            showScreen("resultsScreen");
+            if (pollInterval) clearInterval(pollInterval);
+          }
+        } catch (error) {
+          console.error("Failed to load results:", error);
         }
+      }
 
-        function showError(message) {
-            const errorEl = document.getElementById('joinError');
-            errorEl.textContent = message;
-            errorEl.classList.remove('hidden');
-            setTimeout(() => errorEl.classList.add('hidden'), 5000);
-        }
+      function showScreen(screenId) {
+        [
+          "joinScreen",
+          "waitingScreen",
+          "answerScreen",
+          "votingScreen",
+          "resultsScreen",
+        ].forEach((id) => {
+          document.getElementById(id).classList.add("hidden");
+        });
+        document.getElementById(screenId).classList.remove("hidden");
+      }
 
-        function getErrorMessage(error) {
-            const messages = {
-                'not_found': 'Room not found',
-                'already_started': 'Game already started',
-                'room_full': 'Room is full'
-            };
-            return messages[error] || 'An error occurred';
-        }
+      function getCurrentScreen() {
+        const screens = [
+          "joinScreen",
+          "waitingScreen",
+          "answerScreen",
+          "votingScreen",
+          "resultsScreen",
+        ];
+        return screens.find(
+          (id) => !document.getElementById(id).classList.contains("hidden")
+        );
+      }
+
+      function showError(message) {
+        const errorEl = document.getElementById("joinError");
+        errorEl.textContent = message;
+        errorEl.classList.remove("hidden");
+        setTimeout(() => errorEl.classList.add("hidden"), 5000);
+      }
+
+      function getErrorMessage(error) {
+        const messages = {
+          not_found: "Room not found",
+          already_started: "Game already started",
+          room_full: "Room is full",
+        };
+        return messages[error] || "An error occurred";
+      }
     </script>
-</body>
+  </body>
 </html>
