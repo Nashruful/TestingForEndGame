@@ -1,588 +1,778 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quiplash Game</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiplash - Player Controller</title>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-      }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-      .container {
-        background: white;
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 500px;
-        width: 100%;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 30px 25px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
 
-      h1 {
-        color: #667eea;
-        text-align: center;
-        margin-bottom: 30px;
-        font-size: 2em;
-      }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 25px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-      h2 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 1.3em;
-      }
+        .logo-container img {
+            max-width: 200px;
+            max-height: 80px;
+            object-fit: contain;
+        }
 
-      .input-group {
-        margin-bottom: 20px;
-      }
+        /* Placeholder for logo - remove this when you add your image */
+        .logo-placeholder {
+            width: 200px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+        }
 
-      label {
-        display: block;
-        color: #555;
-        margin-bottom: 8px;
-        font-weight: 600;
-      }
+        h1 {
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 26px;
+            font-weight: 700;
+        }
 
-      input,
-      textarea {
-        width: 100%;
-        padding: 12px;
-        border: 2px solid #ddd;
-        border-radius: 10px;
-        font-size: 16px;
-        transition: border-color 0.3s;
-      }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
 
-      input:focus,
-      textarea:focus {
-        outline: none;
-        border-color: #667eea;
-      }
+        .screen {
+            display: none;
+        }
 
-      textarea {
-        resize: vertical;
-        min-height: 100px;
-        font-family: inherit;
-      }
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in;
+        }
 
-      button {
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-      }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-      button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-      }
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            background: #f8fafc;
+        }
 
-      button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-      }
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
 
-      .hidden {
-        display: none;
-      }
+        textarea {
+            min-height: 130px;
+            resize: vertical;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-      .status {
-        text-align: center;
-        color: #666;
-        margin: 20px 0;
-        font-size: 16px;
-      }
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
 
-      .question-text {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        text-align: center;
-        font-size: 18px;
-        color: #333;
-        font-weight: 500;
-      }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
 
-      .vote-option {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        cursor: pointer;
-        transition: all 0.3s;
-        border: 3px solid transparent;
-      }
+        button:active {
+            transform: translateY(0);
+        }
 
-      .vote-option:hover {
-        background: #e9ecef;
-        transform: translateX(5px);
-      }
+        button:disabled {
+            background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
-      .vote-option.selected {
-        border-color: #667eea;
-        background: #e7eaff;
-      }
+        .error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
 
-      .results-list {
-        margin-top: 20px;
-      }
+        .error.show {
+            display: block;
+            animation: shake 0.5s;
+        }
 
-      .result-item {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        border-left: 5px solid #667eea;
-      }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
 
-      .result-item.winner {
-        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-        border-left-color: #fdcb6e;
-      }
+        .success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
 
-      .result-name {
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 5px;
-      }
+        .success.show {
+            display: block;
+        }
 
-      .result-answer {
-        color: #555;
-        font-style: italic;
-        margin-bottom: 5px;
-      }
+        .waiting-message {
+            text-align: center;
+            color: #475569;
+            font-size: 17px;
+            padding: 40px 20px;
+        }
 
-      .result-votes {
-        color: #667eea;
-        font-weight: 600;
-      }
+        .waiting-message .spinner {
+            width: 55px;
+            height: 55px;
+            border: 5px solid #e2e8f0;
+            border-top: 5px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 20px auto;
+        }
 
-      .error {
-        background: #fee;
-        color: #c33;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        text-align: center;
-      }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-      .timer {
-        text-align: center;
-        font-size: 24px;
-        color: #667eea;
-        font-weight: 700;
-        margin: 20px 0;
-      }
+        .timer {
+            text-align: center;
+            font-size: 52px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .timer.warning {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .prompt-text {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 17px;
+            text-align: center;
+            color: #1e293b;
+            border-left: 5px solid #6366f1;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .vote-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .vote-option {
+            padding: 18px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 3px solid #e2e8f0;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .vote-option:hover {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-color: #6366f1;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .vote-option.selected {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-color: #6366f1;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .player-name {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
+
+        .char-count {
+            text-align: right;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .char-count.warning {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .waiting-message p:first-of-type {
+            font-weight: 600;
+            font-size: 18px;
+            color: #1e293b;
+        }
+
+        .waiting-message p:last-of-type {
+            color: #64748b;
+        }
+
+        .emoji {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="container">
-      <!-- Join Screen -->
-      <div id="joinScreen">
-        <h1>🎮 Quiplash</h1>
-        <div class="input-group">
-          <label>Your Name</label>
-          <input
-            type="text"
-            id="playerName"
-            placeholder="Enter your name"
-            maxlength="20"
-          />
+        <!-- Logo at the top -->
+        <div class="logo-container">
+            <!-- Replace the div below with: <img src="assets/logo.png" alt="Game Logo"> -->
+            <div class="logo-placeholder">EndGames</div>
         </div>
-        <div class="input-group">
-          <label>Room Code</label>
-          <input
-            type="text"
-            id="roomCode"
-            placeholder="ABCD"
-            maxlength="4"
-            style="text-transform: uppercase"
-          />
-        </div>
-        <div id="joinError" class="error hidden"></div>
-        <button id="joinBtn">Join Game</button>
-      </div>
 
-      <!-- Waiting Screen -->
-      <div id="waitingScreen" class="hidden">
-        <h1>🎮 Quiplash</h1>
-        <h2>Waiting for game to start...</h2>
-        <div class="status" id="waitingStatus">
-          Connected as <strong id="playerNameDisplay"></strong><br />
-          Room: <strong id="roomCodeDisplay"></strong>
+        <!-- Join Screen -->
+        <div id="joinScreen" class="screen active">
+            <h1>Join the Game</h1>
+            <p class="subtitle">Enter the room code shown on screen</p>
+            
+            <div id="joinError" class="error"></div>
+            
+            <input type="text" id="roomCodeInput" placeholder="Room Code" maxlength="6" 
+                   style="text-transform: uppercase;">
+            <input type="text" id="usernameInput" placeholder="Your Name" maxlength="20">
+            <button id="joinButton">Join Game</button>
         </div>
-      </div>
 
-      <!-- Answer Screen -->
-      <div id="answerScreen" class="hidden">
-        <h1>🎮 Answer Time!</h1>
-        <div class="question-text" id="questionText"></div>
-        <div class="timer" id="answerTimer">60</div>
-        <div class="input-group">
-          <textarea
-            id="answerInput"
-            placeholder="Type your funny answer here..."
-            maxlength="100"
-          ></textarea>
+        <!-- Waiting Screen -->
+        <div id="waitingScreen" class="screen">
+            <h1>Welcome!</h1>
+            <div class="player-name" id="playerNameDisplay"></div>
+            <div class="waiting-message">
+                <div class="emoji">⏳</div>
+                <div class="spinner"></div>
+                <p>Waiting for game to start...</p>
+                <p style="font-size: 14px; margin-top: 10px;">
+                    Watch the main screen!
+                </p>
+            </div>
         </div>
-        <button id="submitAnswerBtn">Submit Answer</button>
-      </div>
 
-      <!-- Voting Screen -->
-      <div id="votingScreen" class="hidden">
-        <h1>🗳️ Vote Time!</h1>
-        <div class="question-text" id="votingQuestion"></div>
-        <h2>Which answer is funnier?</h2>
-        <div class="vote-option" id="option1" data-option="1">
-          <div id="option1Text"></div>
-        </div>
-        <div class="vote-option" id="option2" data-option="2">
-          <div id="option2Text"></div>
-        </div>
-        <button id="submitVoteBtn" disabled>Submit Vote</button>
-      </div>
+        <!-- Answering Screen -->
+        <div id="answeringScreen" class="screen">
+            <h1>Your Turn</h1>
+            <div class="timer" id="answerTimer">90</div>
+            
+            <div class="prompt-text" id="promptText"></div>
+            
+            <div id="answerSuccess" class="success"></div>
+            
+            <div id="singleAnswerSection">
+                <textarea id="answerInput" placeholder="Type your answer here..." maxlength="200"></textarea>
+                <div class="char-count" id="charCount">0/200</div>
+                <button id="submitAnswerButton">Submit Answer</button>
+            </div>
 
-      <!-- Results Screen -->
-      <div id="resultsScreen" class="hidden">
-        <h1>🏆 Results!</h1>
-        <div class="question-text" id="resultsQuestion"></div>
-        <div class="results-list" id="resultsList"></div>
-      </div>
+            <!-- Round 3: Triple Answer -->
+            <div id="tripleAnswerSection" style="display: none;">
+                <div class="input-group">
+                    <label>Answer 1:</label>
+                    <input type="text" id="answer1Input" placeholder="First answer" maxlength="100">
+                </div>
+                <div class="input-group">
+                    <label>Answer 2:</label>
+                    <input type="text" id="answer2Input" placeholder="Second answer" maxlength="100">
+                </div>
+                <div class="input-group">
+                    <label>Answer 3:</label>
+                    <input type="text" id="answer3Input" placeholder="Third answer" maxlength="100">
+                </div>
+                <button id="submitTripleAnswerButton">Submit Answers</button>
+            </div>
+        </div>
+
+        <!-- Waiting for Others Screen -->
+        <div id="waitingForOthersScreen" class="screen">
+            <h1>Answer Submitted!</h1>
+            <div class="waiting-message">
+                <div class="emoji">✅</div>
+                <div class="spinner"></div>
+                <p>Waiting for other players...</p>
+                <p style="font-size: 14px; margin-top: 10px;">
+                    Watch the main screen!
+                </p>
+            </div>
+        </div>
+
+        <!-- Voting Screen -->
+        <div id="votingScreen" class="screen">
+            <h1>Time to Vote!</h1>
+            <div class="timer" id="voteTimer">30</div>
+            
+            <div class="prompt-text" id="votingPromptText"></div>
+            
+            <div id="voteSuccess" class="success"></div>
+            
+            <div class="vote-options" id="voteOptions">
+                <!-- Vote options will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Waiting for Votes Screen -->
+        <div id="waitingForVotesScreen" class="screen">
+            <h1>Vote Submitted!</h1>
+            <div class="waiting-message">
+                <div class="emoji">🗳️</div>
+                <div class="spinner"></div>
+                <p>Waiting for results...</p>
+                <p style="font-size: 14px; margin-top: 10px;">
+                    Watch the main screen!
+                </p>
+            </div>
+        </div>
+
+        <!-- Spectating Screen (when not in current prompt) -->
+        <div id="spectatingScreen" class="screen">
+            <h1>Enjoy the Show!</h1>
+            <div class="waiting-message">
+                <div class="emoji">👀</div>
+                <p>You're not in this round</p>
+                <p style="font-size: 14px; margin-top: 10px;">
+                    Grab some popcorn! 🍿
+                </p>
+            </div>
+        </div>
     </div>
 
     <script>
-      const API_URL = "https://endgame-back-end.onrender.com";
+        // Configuration
+        const SERVER_URL = 'https://endgames-server.onrender.com'; // Change to your server URL
+        
+        // State
+        let socket;
+        let gameId;
+        let playerId;
+        let playerName;
+        let currentGamePromptId;
+        let answerTimerInterval;
+        let voteTimerInterval;
 
-      let gameState = {
-        playerId: null,
-        roomCode: null,
-        playerName: null,
-        selectedVote: null,
-        option1Id: null,
-        option2Id: null,
-      };
+        // DOM Elements
+        const screens = {
+            join: document.getElementById('joinScreen'),
+            waiting: document.getElementById('waitingScreen'),
+            answering: document.getElementById('answeringScreen'),
+            waitingForOthers: document.getElementById('waitingForOthersScreen'),
+            voting: document.getElementById('votingScreen'),
+            waitingForVotes: document.getElementById('waitingForVotesScreen'),
+            spectating: document.getElementById('spectatingScreen')
+        };
 
-      let pollInterval = null;
-      let timerInterval = null;
+        // Initialize Socket.io
+        function connectToServer() {
+            socket = io(SERVER_URL);
 
-      // Join button
-      document.getElementById("joinBtn").addEventListener("click", joinGame);
-      document.getElementById("roomCode").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") joinGame();
-      });
-
-      // Submit answer button
-      document
-        .getElementById("submitAnswerBtn")
-        .addEventListener("click", submitAnswer);
-
-      // Vote options
-      document
-        .getElementById("option1")
-        .addEventListener("click", () => selectVote(1));
-      document
-        .getElementById("option2")
-        .addEventListener("click", () => selectVote(2));
-      document
-        .getElementById("submitVoteBtn")
-        .addEventListener("click", submitVote);
-
-      async function joinGame() {
-        const name = document.getElementById("playerName").value.trim();
-        const code = document
-          .getElementById("roomCode")
-          .value.trim()
-          .toUpperCase();
-
-        if (!name || !code) {
-          showError("Please enter both name and room code");
-          return;
-        }
-
-        try {
-          const response = await fetch(`${API_URL}/rooms/${code}/join`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-            gameState.playerId = data.playerId;
-            gameState.roomCode = code;
-            gameState.playerName = name;
-
-            document.getElementById("playerNameDisplay").textContent = name;
-            document.getElementById("roomCodeDisplay").textContent = code;
-
-            showScreen("waitingScreen");
-            startPolling();
-          } else {
-            showError(getErrorMessage(data.error));
-          }
-        } catch (error) {
-          showError("Failed to connect to server");
-        }
-      }
-
-      function startPolling() {
-        pollInterval = setInterval(async () => {
-          try {
-            const response = await fetch(
-              `${API_URL}/rooms/${gameState.roomCode}/status/${gameState.playerId}`
-            );
-            const data = await response.json();
-
-            if (data.success) {
-              if (
-                data.phase === "answering" &&
-                getCurrentScreen() !== "answerScreen"
-              ) {
-                showAnswerScreen();
-              } else if (
-                data.phase === "voting" &&
-                getCurrentScreen() !== "votingScreen"
-              ) {
-                showVotingScreen();
-              } else if (
-                data.phase === "results" &&
-                getCurrentScreen() !== "resultsScreen"
-              ) {
-                showResultsScreen();
-              }
-            }
-          } catch (error) {
-            console.error("Polling error:", error);
-          }
-        }, 2000);
-      }
-
-      async function showAnswerScreen() {
-    try {
-        const response = await fetch(`${API_URL}/rooms/${gameState.roomCode}/question`);
-        const data = await response.json();
-
-        if (data.success) {
-            document.getElementById('questionText').textContent = data.question;
-
-            // Reset input and button
-            const answerInput = document.getElementById('answerInput');
-            answerInput.value = '';
-            
-            const submitBtn = document.getElementById('submitAnswerBtn');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit Answer';
-
-            showScreen('answerScreen');
-            startAnswerTimer();
-        }
-    } catch (error) {
-        console.error('Failed to load question:', error);
-    }
-}
-
-
-      function startAnswerTimer() {
-        let timeLeft = 60;
-        const timerEl = document.getElementById("answerTimer");
-
-        timerInterval = setInterval(() => {
-          timeLeft--;
-          timerEl.textContent = timeLeft;
-
-          if (timeLeft <= 10) {
-            timerEl.style.color = "#e74c3c";
-          }
-
-          if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            submitAnswer();
-          }
-        }, 1000);
-      }
-
-      async function submitAnswer() {
-        if (timerInterval) clearInterval(timerInterval);
-
-        const answer =
-          document.getElementById("answerInput").value.trim() || "No answer";
-
-        try {
-          await fetch(`${API_URL}/rooms/${gameState.roomCode}/answer`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              playerId: gameState.playerId,
-              answer: answer,
-            }),
-          });
-
-          document.getElementById("submitAnswerBtn").disabled = true;
-          document.getElementById("submitAnswerBtn").textContent =
-            "Waiting for others...";
-        } catch (error) {
-          console.error("Failed to submit answer:", error);
-        }
-      }
-
-      async function showVotingScreen() {
-        try {
-          const response = await fetch(
-            `${API_URL}/rooms/${gameState.roomCode}/vote/${gameState.playerId}`
-          );
-          const data = await response.json();
-
-          if (data.success) {
-            document.getElementById("votingQuestion").textContent =
-              data.question;
-            document.getElementById("option1Text").textContent = data.option1;
-            document.getElementById("option2Text").textContent = data.option2;
-
-            gameState.option1Id = data.option1Id;
-            gameState.option2Id = data.option2Id;
-
-            showScreen("votingScreen");
-          }
-        } catch (error) {
-          console.error("Failed to load voting options:", error);
-        }
-      }
-
-      function selectVote(option) {
-        gameState.selectedVote = option;
-
-        document.getElementById("option1").classList.remove("selected");
-        document.getElementById("option2").classList.remove("selected");
-
-        document.getElementById(`option${option}`).classList.add("selected");
-        document.getElementById("submitVoteBtn").disabled = false;
-      }
-
-      async function submitVote() {
-        if (!gameState.selectedVote) return;
-
-        const votedForId =
-          gameState.selectedVote === 1
-            ? gameState.option1Id
-            : gameState.option2Id;
-
-        try {
-          await fetch(`${API_URL}/rooms/${gameState.roomCode}/vote`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              playerId: gameState.playerId,
-              votedFor: votedForId,
-            }),
-          });
-
-          document.getElementById("submitVoteBtn").disabled = true;
-          document.getElementById("submitVoteBtn").textContent =
-            "Waiting for results...";
-        } catch (error) {
-          console.error("Failed to submit vote:", error);
-        }
-      }
-
-      async function showResultsScreen() {
-        try {
-          const response = await fetch(
-            `${API_URL}/rooms/${gameState.roomCode}/results`
-          );
-          const data = await response.json();
-
-          if (data.success) {
-            document.getElementById("resultsQuestion").textContent =
-              data.question;
-
-            const resultsList = document.getElementById("resultsList");
-            resultsList.innerHTML = "";
-
-            data.results.forEach((result, index) => {
-              const item = document.createElement("div");
-              item.className = "result-item" + (index === 0 ? " winner" : "");
-              item.innerHTML = `
-                            <div class="result-name">${
-                              index === 0 ? "🏆 " : ""
-                            }${result.name}</div>
-                            <div class="result-answer">"${result.answer}"</div>
-                            <div class="result-votes">${result.votes} vote${
-                result.votes !== 1 ? "s" : ""
-              }</div>
-                        `;
-              resultsList.appendChild(item);
+            socket.on('connect', () => {
+                console.log('Connected to server');
             });
 
-            showScreen("resultsScreen");
-            if (pollInterval) clearInterval(pollInterval);
-          }
-        } catch (error) {
-          console.error("Failed to load results:", error);
+            socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+            });
+
+            // Listen for game events
+            socket.on('gameStarted', () => {
+                showScreen('waiting');
+            });
+
+            socket.on('yourPrompt', (data) => {
+                currentGamePromptId = data.gamePromptId;
+                showAnsweringScreen(data);
+            });
+
+            socket.on('answerSubmitted', (data) => {
+                if (data.success) {
+                    showScreen('waitingForOthers');
+                }
+            });
+
+            socket.on('showPromptVoting', (data) => {
+                // Check if this player should vote (not one of the answerers)
+                const isAnswerer = data.gamePrompt.player1_id === playerId || 
+                                   data.gamePrompt.player2_id === playerId;
+                
+                if (isAnswerer) {
+                    showScreen('spectating');
+                } else {
+                    showVotingScreen(data);
+                }
+            });
+
+            socket.on('voteSubmitted', (data) => {
+                if (data.success) {
+                    showScreen('waitingForVotes');
+                }
+            });
+
+            socket.on('votingResults', () => {
+                showScreen('spectating');
+            });
+
+            socket.on('showScoreboard', () => {
+                showScreen('spectating');
+            });
+
+            socket.on('roundIntro', () => {
+                showScreen('waiting');
+            });
+
+            socket.on('answeringPhase', () => {
+                // Wait for your specific prompt
+            });
         }
-      }
 
-      function showScreen(screenId) {
-        [
-          "joinScreen",
-          "waitingScreen",
-          "answerScreen",
-          "votingScreen",
-          "resultsScreen",
-        ].forEach((id) => {
-          document.getElementById(id).classList.add("hidden");
+        // Join Game
+        document.getElementById('joinButton').addEventListener('click', async () => {
+            const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            const username = document.getElementById('usernameInput').value.trim();
+
+            if (!roomCode || !username) {
+                showError('joinError', 'Please enter room code and name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/game/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomCode, username })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    showError('joinError', data.error);
+                    return;
+                }
+
+                // Save player info
+                gameId = data.game.id;
+                playerId = data.player.id;
+                playerName = data.player.username;
+
+                // Connect to socket
+                connectToServer();
+                
+                // Join game room
+                socket.emit('joinGameRoom', { gameId, playerId });
+
+                // Show waiting screen
+                document.getElementById('playerNameDisplay').textContent = playerName;
+                showScreen('waiting');
+
+            } catch (error) {
+                showError('joinError', 'Connection failed. Try again.');
+                console.error(error);
+            }
         });
-        document.getElementById(screenId).classList.remove("hidden");
-      }
 
-      function getCurrentScreen() {
-        const screens = [
-          "joinScreen",
-          "waitingScreen",
-          "answerScreen",
-          "votingScreen",
-          "resultsScreen",
-        ];
-        return screens.find(
-          (id) => !document.getElementById(id).classList.contains("hidden")
-        );
-      }
+        // Submit Single Answer
+        document.getElementById('submitAnswerButton').addEventListener('click', () => {
+            const answer = document.getElementById('answerInput').value.trim();
 
-      function showError(message) {
-        const errorEl = document.getElementById("joinError");
-        errorEl.textContent = message;
-        errorEl.classList.remove("hidden");
-        setTimeout(() => errorEl.classList.add("hidden"), 5000);
-      }
+            if (!answer) {
+                return;
+            }
 
-      function getErrorMessage(error) {
-        const messages = {
-          not_found: "Room not found",
-          already_started: "Game already started",
-          room_full: "Room is full",
-        };
-        return messages[error] || "An error occurred";
-      }
+            socket.emit('submitAnswer', {
+                gamePromptId: currentGamePromptId,
+                playerId: playerId,
+                answerText: answer
+            });
+
+            document.getElementById('answerInput').value = '';
+        });
+
+        // Submit Triple Answer (Round 3)
+        document.getElementById('submitTripleAnswerButton').addEventListener('click', () => {
+            const answer1 = document.getElementById('answer1Input').value.trim();
+            const answer2 = document.getElementById('answer2Input').value.trim();
+            const answer3 = document.getElementById('answer3Input').value.trim();
+
+            if (!answer1 || !answer2 || !answer3) {
+                return;
+            }
+
+            socket.emit('submitAnswer', {
+                gamePromptId: currentGamePromptId,
+                playerId: playerId,
+                answerText: answer1,
+                answerText2: answer2,
+                answerText3: answer3
+            });
+
+            document.getElementById('answer1Input').value = '';
+            document.getElementById('answer2Input').value = '';
+            document.getElementById('answer3Input').value = '';
+        });
+
+        // Character Counter
+        document.getElementById('answerInput').addEventListener('input', (e) => {
+            const count = e.target.value.length;
+            const counter = document.getElementById('charCount');
+            counter.textContent = `${count}/200`;
+            
+            if (count > 180) {
+                counter.classList.add('warning');
+            } else {
+                counter.classList.remove('warning');
+            }
+        });
+
+        // Show Answering Screen
+        function showAnsweringScreen(data) {
+            showScreen('answering');
+            
+            document.getElementById('promptText').textContent = data.promptText;
+            
+            // Check if round 3 (triple answer)
+            if (data.roundType === 3) {
+                document.getElementById('singleAnswerSection').style.display = 'none';
+                document.getElementById('tripleAnswerSection').style.display = 'block';
+            } else {
+                document.getElementById('singleAnswerSection').style.display = 'block';
+                document.getElementById('tripleAnswerSection').style.display = 'none';
+            }
+
+            // Start timer
+            startAnswerTimer(90);
+        }
+
+        // Show Voting Screen
+        function showVotingScreen(data) {
+            showScreen('voting');
+            
+            document.getElementById('votingPromptText').textContent = data.gamePrompt.prompt.text;
+            
+            // Create vote options
+            const voteOptionsContainer = document.getElementById('voteOptions');
+            voteOptionsContainer.innerHTML = '';
+
+            data.gamePrompt.answers.forEach(answer => {
+                const option = document.createElement('div');
+                option.className = 'vote-option';
+                
+                // For round 3, show all three answers
+                if (answer.answer_text_2 && answer.answer_text_3) {
+                    option.innerHTML = `
+                        <div>${answer.answer_text}</div>
+                        <div>${answer.answer_text_2}</div>
+                        <div>${answer.answer_text_3}</div>
+                    `;
+                } else {
+                    option.textContent = answer.answer_text;
+                }
+
+                option.addEventListener('click', () => {
+                    // Remove previous selection
+                    document.querySelectorAll('.vote-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Mark this as selected
+                    option.classList.add('selected');
+                    
+                    // Submit vote
+                    socket.emit('submitVote', {
+                        gamePromptId: data.gamePrompt.id,
+                        voterId: playerId,
+                        answerId: answer.id
+                    });
+                });
+
+                voteOptionsContainer.appendChild(option);
+            });
+
+            // Start timer
+            startVoteTimer(30);
+        }
+
+        // Timer Functions
+        function startAnswerTimer(seconds) {
+            clearInterval(answerTimerInterval);
+            let remaining = seconds;
+            const timerElement = document.getElementById('answerTimer');
+            
+            timerElement.textContent = remaining;
+            timerElement.classList.remove('warning');
+
+            answerTimerInterval = setInterval(() => {
+                remaining--;
+                timerElement.textContent = remaining;
+
+                if (remaining <= 10) {
+                    timerElement.classList.add('warning');
+                }
+
+                if (remaining <= 0) {
+                    clearInterval(answerTimerInterval);
+                    showScreen('waitingForOthers');
+                }
+            }, 1000);
+        }
+
+        function startVoteTimer(seconds) {
+            clearInterval(voteTimerInterval);
+            let remaining = seconds;
+            const timerElement = document.getElementById('voteTimer');
+            
+            timerElement.textContent = remaining;
+            timerElement.classList.remove('warning');
+
+            voteTimerInterval = setInterval(() => {
+                remaining--;
+                timerElement.textContent = remaining;
+
+                if (remaining <= 10) {
+                    timerElement.classList.add('warning');
+                }
+
+                if (remaining <= 0) {
+                    clearInterval(voteTimerInterval);
+                }
+            }, 1000);
+        }
+
+        // UI Helpers
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => {
+                screen.classList.remove('active');
+            });
+            screens[screenName].classList.add('active');
+        }
+
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+            
+            setTimeout(() => {
+                errorElement.classList.remove('show');
+            }, 3000);
+        }
+
+        // Auto-uppercase room code input
+        document.getElementById('roomCodeInput').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
     </script>
-  </body>
+</body>
 </html>
