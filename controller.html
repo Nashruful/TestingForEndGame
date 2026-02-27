@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiplash Controller (Dev)</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 20px; max-width: 720px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    input, button { padding: 10px; font-size: 16px; }
+    input { flex: 1; min-width: 200px; }
+    button { cursor: pointer; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-top: 12px; }
+    .muted { color: #666; }
+    .ok { color: #0a7; font-weight: 700; }
+    .bad { color: #c33; font-weight: 700; }
+    ul { margin: 8px 0 0 18px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h2>Quiplash Controller (Dev)</h2>
+  <p class="muted">Join a room, first joiner becomes host. Host can start when minimum players reached.</p>
+
+  <div class="card">
+    <div class="row">
+      <input id="apiBase" value="http://localhost:3000" />
+    </div>
+    <div class="row">
+      <input id="roomCode" placeholder="Room code (e.g. XERC)" />
+      <input id="name" placeholder="Your name" />
+      <button id="joinBtn">Join</button>
+    </div>
+
+    <div id="joinInfo" class="muted"></div>
+    <div id="error" class="bad"></div>
+
+    <div id="lobby" class="card hidden">
+      <div><strong>Room:</strong> <span id="roomLabel"></span></div>
+      <div><strong>You:</strong> <span id="youLabel"></span> <span id="hostBadge" class="ok hidden">(HOST)</span></div>
+      <div><strong>Status:</strong> <span id="statusLabel"></span></div>
+      <div><strong>Players:</strong> <span id="countLabel"></span></div>
+      <ul id="playersList"></ul>
+
+      <button id="startBtn" class="hidden">Start Game</button>
+      <div id="startHint" class="muted"></div>
+	  <div id="answerCard" class="card hidden">
+  <div><strong>Answer the prompt:</strong></div>
+  <div id="promptText" class="muted"></div>
+  <div id="answersRow1" class="row">
+  <input id="answerInput1" placeholder="Answer 1…" />
+</div>
+<div id="answersRow2" class="row hidden">
+  <input id="answerInput2" placeholder="Answer 2…" />
+</div>
+<div id="answersRow3" class="row hidden">
+  <input id="answerInput3" placeholder="Answer 3…" />
+</div>
+
+<div class="row">
+  <button id="answerBtn">Submit</button>
+</div>
+
+  <div id="answerStatus" class="muted"></div>
+</div>
+<div id="voteCard" class="card hidden">
+  <h3>Voting</h3>
+  <div id="votePromptText" class="muted"></div>
+  <div id="voteOptions" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;"></div>
+  <div id="voteStatus" class="muted" style="margin-top:10px;"></div>
+</div>
+
+
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  const apiBaseEl = $("apiBase");
+  const roomCodeEl = $("roomCode");
+  const nameEl = $("name");
+  const joinBtn = $("joinBtn");
+
+  const lobby = $("lobby");
+  const roomLabel = $("roomLabel");
+  const youLabel = $("youLabel");
+  const hostBadge = $("hostBadge");
+  const statusLabel = $("statusLabel");
+  const countLabel = $("countLabel");
+  const playersList = $("playersList");
+  const startBtn = $("startBtn");
+  const startHint = $("startHint");
+  const joinInfo = $("joinInfo");
+  const errorEl = $("error");
+
+  const MIN_PLAYERS = 3;
+
+  let playerId = null;
+  let isHost = false;
+  let roomCode = null;
+  let pollTimer = null;
+  let hasAnswered = false;
+  let currentPromptId = null;
+  let currentRoundNumber = 1;
+  let requiredAnswerCount = 1;
+  let ownerToken = null;
+  let hasVoted = false;       // true = button disabled, prevents double-click
+  let isVoteConfirmed = false; // true = server confirmed vote accepted
+  let currentVotePromptId = null;
+  let votingOptions = null;
+  let isFetchingVoting = false; // guard: prevent concurrent /voting fetches
+  let isSubmittingVote = false; // guard: pause polling during vote submission
+
+
+
+  function apiBase() {
+    return (apiBaseEl.value || "").replace(/\/+$/, "");
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg || "";
+  }
+
+  async function fetchJson(url, options) {
+  const r = await fetch(url, options);
+  const text = await r.text();
+  let data = null;
+
+  try { data = text ? JSON.parse(text) : null; }
+  catch { throw new Error(`Bad JSON from server: ${text}`); }
+
+  if (!r.ok) {
+    const msg = data?.error || data?.message || `HTTP ${r.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+  function setUIJoined() {
+    lobby.classList.remove("hidden");
+    roomLabel.textContent = roomCode;
+    youLabel.textContent = playerId ? playerId.slice(0, 8) : "?";
+    hostBadge.classList.toggle("hidden", !isHost);
+  }
+
+  async function joinRoom() {
+    if (playerId) return;
+    showError("");
+
+    roomCode = (roomCodeEl.value || "").trim().toUpperCase();
+    const randomName = "player_" + Math.floor(1000 + Math.random() * 9000);
+    const name = (nameEl.value || "").trim() || randomName;
+    if (!nameEl.value.trim()) nameEl.value = name; // show the generated name in the input
+
+    if (!roomCode) return showError("Enter a room code.");
+    if (!apiBase()) return showError("API base URL missing.");
+
+    const url = `${apiBase()}/rooms/${roomCode}/join`;
+    const body = JSON.stringify({ name });
+
+    const data = await fetchJson(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body
+    });
+
+    if (!data || !data.success) throw new Error("join_failed");
+
+    playerId = data.playerId;
+    isHost = !!data.isHost;
+	$("joinBtn").disabled = true;
+	ownerToken = data.ownerToken || null;
+
+
+    joinInfo.textContent = `Joined as "${name}".`;
+    setUIJoined();
+    startPolling();
+  }
+
+  async function pollRoom() {
+    if (!roomCode || isSubmittingVote) return; // skip poll while submitting vote
+    const url = `${apiBase()}/rooms/${roomCode}`;
+    const data = await fetchJson(url);
+
+    if (!data || !data.success) throw new Error("poll_failed");
+
+    statusLabel.textContent = `${data.phase} | started=${data.started}`;
+	// -----------------------------
+// ANSWERING PHASE UI
+// -----------------------------
+const answerCard = $("answerCard");
+const promptText = $("promptText");
+const answerInput = $("answerInput");
+const answerBtn = $("answerBtn");
+const answerStatus = $("answerStatus");
+
+if (data.phase === "answering_all") {
+  answerCard.classList.remove("hidden");
+
+  // Fetch prompt once per round
+  if (!currentPromptId) {
+    hasAnswered = false; // ← tambah ini: reset tiap kali prompt baru
+    $("answerInput1").value = "";
+    $("answerInput2").value = "";
+    $("answerInput3").value = "";
+
+    fetchJson(`${apiBase()}/rooms/${roomCode}/question?playerId=${playerId}`)
+      .then(q => {
+  promptText.textContent = q.question || "";
+  currentPromptId = q.roundPromptId || "active";
+  currentRoundNumber = q.roundNumber || 1;
+
+  requiredAnswerCount = (currentRoundNumber === 3) ? 3 : 1;
+  // Round 1/2: remove the "Answer 1…" vibe
+$("answerInput1").placeholder = (requiredAnswerCount === 3) ? "Answer 1…" : "Your answer…";
+
+  // Show/hide extra inputs for round 3
+  $("answersRow2").classList.toggle("hidden", requiredAnswerCount < 2);
+  $("answersRow3").classList.toggle("hidden", requiredAnswerCount < 3);
+
+  // Reset fields when prompt changes (new round/prompt)
+  $("answerInput1").value = "";
+  $("answerInput2").value = "";
+  $("answerInput3").value = "";
+})
+
+      .catch(() => {});
+  }
+
+ $("answerInput1").disabled = hasAnswered;
+ $("answerInput2").disabled = hasAnswered;
+ $("answerInput3").disabled = hasAnswered;
+ answerBtn.disabled = hasAnswered;
+
+
+  if (hasAnswered) {
+  answerStatus.textContent = "Answer submitted.";
+} else if (requiredAnswerCount === 3) {
+  answerStatus.textContent = "Submit 3 answers.";
+} else {
+  answerStatus.textContent = (requiredAnswerCount === 1) ? "" : answerStatus.textContent;
+}
+
+
+} else {
+  answerCard.classList.add("hidden");
+  hasAnswered = false;
+  currentPromptId = null;
+  currentRoundNumber = 1;
+  requiredAnswerCount = 1;
+
+}
+
+// -----------------------------
+// VOTING PHASE UI
+// -----------------------------
+const voteCard = $("voteCard");
+const votePromptText = $("votePromptText");
+const voteOptionsEl = $("voteOptions");
+const voteStatus = $("voteStatus");
+
+if (data.phase === "voting") {
+  voteCard.classList.remove("hidden");
+
+  if (!isFetchingVoting) {
+  isFetchingVoting = true;
+  fetchJson(`${apiBase()}/rooms/${roomCode}/voting`)
+    .then(v => {
+      // Reset UI only if prompt actually changed
+      if (currentVotePromptId !== v.roundPromptId) {
+        currentVotePromptId = v.roundPromptId;
+        hasVoted = false;
+        isVoteConfirmed = false;
+        voteOptionsEl.innerHTML = "";
+      }
+
+      votePromptText.textContent = v.promptText || "Vote now";
+
+      const optionPlayers = new Set((v.options || []).map(o => o.playerId));
+      const iAmAnswerer = optionPlayers.has(playerId);
+
+      if (iAmAnswerer) {
+        voteStatus.textContent = "You answered this one — you cannot vote.";
+        return;
+      }
+
+      // ✅ Skip rebuild if buttons already rendered (prevents destroying buttons every 1s poll)
+      if (voteOptionsEl.children.length > 0) {
+        if (isVoteConfirmed) {
+          voteStatus.textContent = "Vote submitted. ✅";
+        } else if (hasVoted) {
+          voteStatus.textContent = "Submitting...";
+        } else {
+          voteStatus.textContent = "Pick one answer:";
+        }
+        return;
+      }
+
+      voteStatus.textContent = "Pick one answer:";
+
+      for (const opt of (v.options || [])) {
+        const btn = document.createElement("button");
+        btn.textContent = opt.text;
+        btn.disabled = hasVoted;
+
+        btn.addEventListener("click", async () => {
+          if (hasVoted) return;
+
+          // Prevent double-click, but don't confirm until server responds
+          hasVoted = true;
+          isSubmittingVote = true; // pause polling
+          voteStatus.textContent = "Submitting...";
+          [...voteOptionsEl.querySelectorAll("button")].forEach(b => b.disabled = true);
+
+          console.log(`[vote] sending vote: answerId=${opt.answerId} voterPlayerId=${playerId}`);
+
+          try {
+            const resp = await fetchJson(`${apiBase()}/rooms/${roomCode}/vote`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ voterPlayerId: playerId, answerId: opt.answerId })
+            });
+
+            console.log("[vote] server response:", resp);
+
+            if (resp && resp.success) {
+              isVoteConfirmed = true;
+              isSubmittingVote = false;
+              voteStatus.textContent = "Vote submitted. ✅";
+            } else {
+              // Server rejected — rollback
+              hasVoted = false;
+              isSubmittingVote = false;
+              voteStatus.textContent = `Vote rejected by server.`;
+              console.warn("[vote] server rejected:", resp);
+              [...voteOptionsEl.querySelectorAll("button")].forEach(b => b.disabled = false);
+            }
+          } catch (err) {
+            // Network/HTTP error — rollback
+            hasVoted = false;
+            isSubmittingVote = false;
+            voteStatus.textContent = `Vote error: ${err.message}`;
+            console.error("[vote] fetch error:", err);
+            [...voteOptionsEl.querySelectorAll("button")].forEach(b => b.disabled = false);
+          }
+        });
+
+        voteOptionsEl.appendChild(btn);
+      }
+    })
+    .catch(err => {
+      voteStatus.textContent = `Voting not ready (${err.message})`;
+    })
+    .finally(() => { isFetchingVoting = false; });
+  } // end isFetchingVoting guard
+
+} else {
+  voteCard.classList.add("hidden");
+  hasVoted = false;
+  isVoteConfirmed = false;
+  currentVotePromptId = null;
+  votingOptions = null;
+}
+
+
+
+
+    countLabel.textContent = `${(data.players || []).length}`;
+
+    // players list
+    playersList.innerHTML = "";
+    for (const p of (data.players || [])) {
+      const li = document.createElement("li");
+      li.textContent = `${p.name} ${p.answer ? "✅" : ""} (votes: ${p.votes || 0})`;
+      playersList.appendChild(li);
+    }
+
+    const canStart = isHost && !data.started && (data.players || []).length >= MIN_PLAYERS;
+    startBtn.classList.toggle("hidden", !isHost || data.started);
+    startBtn.disabled = !canStart;
+
+    if (!isHost) {
+      startHint.textContent = data.started ? "Game started." : "Waiting for host to start…";
+    } else {
+      startHint.textContent = data.started
+        ? "Game started."
+        : (canStart ? "You can start the game." : `Need at least ${MIN_PLAYERS} players to start.`);
+    }
+  }
+
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(() => {
+      pollRoom().catch(err => showError(err.message));
+    }, 1000);
+    pollRoom().catch(err => showError(err.message));
+  }
+  
+  async function submitAnswer() {
+  if (!roomCode || !playerId || hasAnswered) return;
+
+  const a1 = ($("answerInput1").value || "").trim();
+  const a2 = ($("answerInput2").value || "").trim();
+  const a3 = ($("answerInput3").value || "").trim();
+
+  const needed = (requiredAnswerCount === 3) ? 3 : 1;
+
+  if (needed === 1) {
+    if (!a1) return showError("Answer cannot be empty.");
+
+    await fetchJson(`${apiBase()}/rooms/${roomCode}/answer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId, text: a1 })
+    });
+
+  } else {
+  // Round 3: require all 3 answers filled before submitting
+  if (!a1 || !a2 || !a3) return showError("Fill all 3 answers before submitting.");
+
+  await fetchJson(`${apiBase()}/rooms/${roomCode}/answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ playerId, texts: [a1, a2, a3] })
+  });
+}
+
+
+  hasAnswered = true;
+
+  $("answerInput1").value = "";
+  $("answerInput2").value = "";
+  $("answerInput3").value = "";
+}
+
+
+
+  async function startGame() {
+    showError("");
+    if (!roomCode || !playerId) return showError("Not joined.");
+
+    const url = `${apiBase()}/rooms/${roomCode}/start`;
+    const body = JSON.stringify({ playerId });
+
+    const data = await fetchJson(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body
+    });
+
+    if (!data || !data.success) throw new Error("start_failed");
+  }
+
+  joinBtn.addEventListener("click", async () => {
+  console.log("[controller] join click");
+  try {
+    await joinRoom();
+    console.log("[controller] joinRoom done");
+  } catch (e) {
+    console.error("[controller] joinRoom error", e);
+    showError(e.message || "join failed");
+  }
+});
+
+  startBtn.addEventListener("click", () => startGame().catch(err => showError(err.message)));
+  $("answerBtn").addEventListener("click", () =>
+  submitAnswer().catch(err => showError(err.message))
+);
+
+})();
+</script>
+</body>
+</html>
