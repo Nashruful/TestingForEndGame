@@ -1,26 +1,172 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="auto">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Quiplash Controller (Dev)</title>
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 20px; max-width: 720px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-    input, button { padding: 10px; font-size: 16px; }
-    input { flex: 1; min-width: 200px; }
-    button { cursor: pointer; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-top: 12px; }
-    .muted { color: #666; }
-    .ok { color: #0a7; font-weight: 700; }
-    .bad { color: #c33; font-weight: 700; }
-    ul { margin: 8px 0 0 18px; }
-    .hidden { display: none; }
-  </style>
+  :root{
+    --bg:#0b0f0d;
+    --panel:#0f1512;
+    --ink:#e9f3ee;
+    --muted:#a9b8b0;
+    --line:rgba(233,243,238,.12);
+    --gold:#c7a24a;
+    --green:#1f7a4a;
+    --danger:#c94a4a;
+    --radius:16px;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    padding:28px;
+    background:
+      radial-gradient(900px 520px at 20% 0%, rgba(199,162,74,.18), transparent 60%),
+      radial-gradient(700px 520px at 95% 30%, rgba(31,122,74,.20), transparent 55%),
+      linear-gradient(180deg, var(--bg), #070a09 80%);
+    color:var(--ink);
+    font-family:
+      "Tajawal",
+      "Noto Naskh Arabic UI",
+      "Noto Sans Arabic",
+      "Segoe UI",
+      Tahoma,
+      Arial,
+      system-ui,
+      sans-serif;
+    max-width: 860px;
+  }
+
+  h2{
+    margin:0 0 6px 0;
+    letter-spacing:.2px;
+    font-weight:800;
+  }
+
+  .muted{ color:var(--muted); }
+  .ok{ color:#5ee6a6; font-weight:800; }
+  .bad{ color:#ff7676; font-weight:800; }
+
+  .row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+
+  input, button{
+    padding:12px 14px;
+    font-size:16px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    color:var(--ink);
+    outline:none;
+  }
+
+  input{
+    flex:1;
+    min-width:220px;
+    direction:auto;         /* key for Arabic */
+    unicode-bidi: plaintext;/* key for Arabic */
+  }
+
+  button{
+    cursor:pointer;
+    background:
+      linear-gradient(180deg, rgba(199,162,74,.18), rgba(199,162,74,.05));
+    border:1px solid rgba(199,162,74,.25);
+  }
+  button:hover{ filter:brightness(1.08); }
+  button:disabled{ opacity:.55; cursor:not-allowed; }
+
+  .card{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-top:14px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  }
+
+  ul{ margin:10px 0 0 18px; }
+  .hidden{ display:none; }
+  .fadeIn{
+  animation:fadeIn .35s ease;
+}
+
+@keyframes fadeIn{
+  from{
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+  /* Make prompt + answers render Arabic properly */
+  #promptText, #votePromptText, #playersList, #joinInfo, #error, #answerStatus, #voteStatus{
+    direction:auto;
+    unicode-bidi: plaintext;
+  }
+  .logo{
+  font-size:28px;
+  letter-spacing:.8px;
+  font-weight:900;
+  color:var(--gold);
+}
+
+.tagline{
+  color:var(--muted);
+  margin-bottom:16px;
+}
+
+.voteBtn{
+  flex:1;
+  min-width:180px;
+  padding:18px;
+  font-size:18px;
+  font-weight:700;
+
+  border-radius:14px;
+  border:1px solid rgba(199,162,74,.3);
+
+  background:
+    linear-gradient(180deg, rgba(199,162,74,.22), rgba(199,162,74,.08));
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    background .2s;
+}
+
+.voteBtn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(0,0,0,.4);
+}
+
+.voteBtn:active{
+  transform:scale(.96);
+}
+
+input{
+  font-size:18px;
+  padding:16px;
+}
+
+::placeholder{
+  color:#8fa79b;
+}
+</style>
 </head>
 <body>
-  <h2>Quiplash Controller (Dev)</h2>
-  <p class="muted">Join a room, first joiner becomes host. Host can start when minimum players reached.</p>
+  <h2 class="logo">Majlis Quiplash</h2>
+  <p class="tagline">Write the funniest answer. Vote the best.</p>
+  
 
   <div class="card">
     <div class="row">
@@ -28,7 +174,7 @@
     </div>
     <div class="row">
       <input id="roomCode" placeholder="Room code (e.g. XERC)" />
-      <input id="name" placeholder="Your name" />
+      <input id="name" placeholder="Your name" dir="auto" />
       <button id="joinBtn">Join</button>
     </div>
 
@@ -38,9 +184,6 @@
     <div id="lobby" class="card hidden">
       <div><strong>Room:</strong> <span id="roomLabel"></span></div>
       <div><strong>You:</strong> <span id="youLabel"></span> <span id="hostBadge" class="ok hidden">(HOST)</span></div>
-      <div><strong>Status:</strong> <span id="statusLabel"></span></div>
-      <div><strong>Players:</strong> <span id="countLabel"></span></div>
-      <ul id="playersList"></ul>
 
       <button id="startBtn" class="hidden">Start Game</button>
       <div id="startHint" class="muted"></div>
@@ -48,13 +191,13 @@
   <div><strong>Answer the prompt:</strong></div>
   <div id="promptText" class="muted"></div>
   <div id="answersRow1" class="row">
-  <input id="answerInput1" placeholder="Answer 1…" />
+  <input id="answerInput1" placeholder="Answer 1…" dir="auto" />
 </div>
 <div id="answersRow2" class="row hidden">
-  <input id="answerInput2" placeholder="Answer 2…" />
+  <input id="answerInput2" placeholder="Answer 2…" dir="auto" />
 </div>
 <div id="answersRow3" class="row hidden">
-  <input id="answerInput3" placeholder="Answer 3…" />
+  <input id="answerInput3" placeholder="Answer 3…" dir="auto" />
 </div>
 
 <div class="row">
@@ -106,9 +249,13 @@
   let currentRoundNumber = 1;
   let requiredAnswerCount = 1;
   let ownerToken = null;
-  let hasVoted = false;
+  let hasVoted = false;       // true = button disabled, prevents double-click
+  let isVoteConfirmed = false; // true = server confirmed vote accepted
   let currentVotePromptId = null;
   let votingOptions = null;
+  let isFetchingVoting = false; // guard: prevent concurrent /voting fetches
+  let isSubmittingVote = false; // guard: pause polling during vote submission
+  let reconnectChecked = false;
 
 
 
@@ -141,13 +288,79 @@
     youLabel.textContent = playerId ? playerId.slice(0, 8) : "?";
     hostBadge.classList.toggle("hidden", !isHost);
   }
+  
+  function storageKey(suffix) {
+  return `quiplash_controller_${suffix}`;
+}
+
+function saveSession() {
+  if (!roomCode || !playerId) return;
+  localStorage.setItem(storageKey("roomCode"), roomCode);
+  localStorage.setItem(storageKey("playerId"), playerId);
+  localStorage.setItem(storageKey("name"), (nameEl.value || "").trim());
+}
+
+function clearSession() {
+  localStorage.removeItem(storageKey("roomCode"));
+  localStorage.removeItem(storageKey("playerId"));
+  localStorage.removeItem(storageKey("name"));
+}
+
+function loadSession() {
+  const savedRoom = (localStorage.getItem(storageKey("roomCode")) || "").trim().toUpperCase();
+  const savedPlayerId = (localStorage.getItem(storageKey("playerId")) || "").trim();
+  const savedName = (localStorage.getItem(storageKey("name")) || "").trim();
+
+  if (savedRoom) roomCodeEl.value = savedRoom;
+  if (savedName) nameEl.value = savedName;
+
+  return {
+    roomCode: savedRoom,
+    playerId: savedPlayerId,
+    name: savedName
+  };
+}
+
+async function tryReconnect() {
+  if (reconnectChecked) return false;
+  reconnectChecked = true;
+
+  const saved = loadSession();
+  if (!saved.roomCode || !saved.playerId) return false;
+
+  try {
+    const data = await fetchJson(`${apiBase()}/rooms/${saved.roomCode}`);
+    if (!data || !data.success) return false;
+
+    const existing = (data.players || []).find(p => p.id === saved.playerId);
+    if (!existing) {
+      clearSession();
+      return false;
+    }
+
+    roomCode = saved.roomCode;
+    playerId = saved.playerId;
+
+    // host assumption for now: first player is host if names/order still match
+    isHost = !!(data.players && data.players[0] && data.players[0].id === playerId);
+
+    joinInfo.textContent = `Reconnected as "${existing.name}".`;
+    setUIJoined();
+    startPolling();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
   async function joinRoom() {
     if (playerId) return;
     showError("");
 
     roomCode = (roomCodeEl.value || "").trim().toUpperCase();
-    const name = (nameEl.value || "").trim() || "Player";
+    const randomName = "player_" + Math.floor(1000 + Math.random() * 9000);
+    const name = (nameEl.value || "").trim() || randomName;
+    if (!nameEl.value.trim()) nameEl.value = name; // show the generated name in the input
 
     if (!roomCode) return showError("Enter a room code.");
     if (!apiBase()) return showError("API base URL missing.");
@@ -165,6 +378,7 @@
 
     playerId = data.playerId;
     isHost = !!data.isHost;
+	saveSession();
 	$("joinBtn").disabled = true;
 	ownerToken = data.ownerToken || null;
 
@@ -175,7 +389,7 @@
   }
 
   async function pollRoom() {
-    if (!roomCode) return;
+    if (!roomCode || isSubmittingVote) return; // skip poll while submitting vote
     const url = `${apiBase()}/rooms/${roomCode}`;
     const data = await fetchJson(url);
 
@@ -193,9 +407,15 @@ const answerStatus = $("answerStatus");
 
 if (data.phase === "answering_all") {
   answerCard.classList.remove("hidden");
+  answerCard.classList.add("fadeIn");
 
   // Fetch prompt once per round
   if (!currentPromptId) {
+    hasAnswered = false; // ← tambah ini: reset tiap kali prompt baru
+    $("answerInput1").value = "";
+    $("answerInput2").value = "";
+    $("answerInput3").value = "";
+
     fetchJson(`${apiBase()}/rooms/${roomCode}/question?playerId=${playerId}`)
       .then(q => {
   promptText.textContent = q.question || "";
@@ -253,13 +473,17 @@ const voteStatus = $("voteStatus");
 
 if (data.phase === "voting") {
   voteCard.classList.remove("hidden");
+  voteCard.classList.add("fadeIn");
 
+  if (!isFetchingVoting) {
+  isFetchingVoting = true;
   fetchJson(`${apiBase()}/rooms/${roomCode}/voting`)
     .then(v => {
-      // If prompt changed, reset vote UI state
+      // Reset UI only if prompt actually changed
       if (currentVotePromptId !== v.roundPromptId) {
         currentVotePromptId = v.roundPromptId;
         hasVoted = false;
+        isVoteConfirmed = false;
         voteOptionsEl.innerHTML = "";
       }
 
@@ -268,33 +492,70 @@ if (data.phase === "voting") {
       const optionPlayers = new Set((v.options || []).map(o => o.playerId));
       const iAmAnswerer = optionPlayers.has(playerId);
 
-      voteOptionsEl.innerHTML = "";
-
       if (iAmAnswerer) {
         voteStatus.textContent = "You answered this one — you cannot vote.";
         return;
       }
 
-      voteStatus.textContent = hasVoted ? "Vote submitted." : "Pick one answer:";
+      // ✅ Skip rebuild if buttons already rendered (prevents destroying buttons every 1s poll)
+      if (voteOptionsEl.children.length > 0) {
+        if (isVoteConfirmed) {
+          voteStatus.textContent = "Vote submitted. ✅";
+        } else if (hasVoted) {
+          voteStatus.textContent = "Submitting...";
+        } else {
+          voteStatus.textContent = "Pick one answer:";
+        }
+        return;
+      }
+
+      voteStatus.textContent = "Pick one answer:";
 
       for (const opt of (v.options || [])) {
         const btn = document.createElement("button");
+        btn.className = "voteBtn";
         btn.textContent = opt.text;
         btn.disabled = hasVoted;
 
         btn.addEventListener("click", async () => {
           if (hasVoted) return;
 
-          const resp = await fetchJson(`${apiBase()}/rooms/${roomCode}/vote`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ voterPlayerId: playerId, answerId: opt.answerId })
-          });
+          // Prevent double-click, but don't confirm until server responds
+          hasVoted = true;
+          isSubmittingVote = true; // pause polling
+          voteStatus.textContent = "Submitting...";
+          [...voteOptionsEl.querySelectorAll("button")].forEach(b => b.disabled = true);
 
-          if (resp && resp.success) {
-            hasVoted = true;
-            voteStatus.textContent = "Vote submitted.";
-            [...voteOptionsEl.querySelectorAll("button")].forEach(b => b.disabled = true);
+          console.log(`[vote] sending vote: answerId=${opt.answerId} voterPlayerId=${playerId}`);
+
+          try {
+            const resp = await fetchJson(`${apiBase()}/rooms/${roomCode}/vote`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ voterPlayerId: playerId, answerId: opt.answerId })
+            });
+
+            console.log("[vote] server response:", resp);
+
+            if (resp && resp.success) {
+              isVoteConfirmed = true;
+              isSubmittingVote = false;
+              voteStatus.textContent = "Vote submitted. ✅";
+            } else {
+              // Server rejected — rollback
+              hasVoted = false;
+              isSubmittingVote = false;
+              voteStatus.textContent = `Vote rejected by server.`;
+              console.warn("[vote] server rejected:", resp);
+              [...voteOptionsEl.querySelectorAll("button")].forEach(b => b.disabled = false);
+            }
+          } catch (err) {
+            // Network/HTTP error — rollback
+            hasVoted = false;
+            isSubmittingVote = false;
+            voteStatus.textContent = `Vote error: ${err.message}`;
+            console.error("[vote] fetch error:", err);
+            [...voteOptionsEl.querySelectorAll("button")].forEach(b => b.disabled = false);
           }
         });
 
@@ -303,11 +564,14 @@ if (data.phase === "voting") {
     })
     .catch(err => {
       voteStatus.textContent = `Voting not ready (${err.message})`;
-    });
+    })
+    .finally(() => { isFetchingVoting = false; });
+  } // end isFetchingVoting guard
 
 } else {
   voteCard.classList.add("hidden");
   hasVoted = false;
+  isVoteConfirmed = false;
   currentVotePromptId = null;
   votingOptions = null;
 }
@@ -365,20 +629,16 @@ if (data.phase === "voting") {
     });
 
   } else {
-    // Round 3: require all 3 answers filled before submitting
-    if (!a1 || !a2 || !a3) return showError("Fill all 3 answers before submitting.");
+  // Round 3: require all 3 answers filled before submitting
+  if (!a1 || !a2 || !a3) return showError("Fill all 3 answers before submitting.");
 
-    const answers = [a1, a2, a3];
+  await fetchJson(`${apiBase()}/rooms/${roomCode}/answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ playerId, texts: [a1, a2, a3] })
+  });
+}
 
-    // Submit all 3 to the same endpoint; server already allows up to 3 in round 3
-    for (const t of answers) {
-      await fetchJson(`${apiBase()}/rooms/${roomCode}/answer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId, text: t })
-      });
-    }
-  }
 
   hasAnswered = true;
 
@@ -407,9 +667,26 @@ if (data.phase === "voting") {
 
   joinBtn.addEventListener("click", async () => {
   console.log("[controller] join click");
+
   try {
+
+    // if already connected do nothing
+    if (playerId && roomCode) {
+      console.log("[controller] already connected");
+      return;
+    }
+
+    // try reconnect first
+    const restored = await tryReconnect();
+    if (restored) {
+      console.log("[controller] reconnect successful");
+      return;
+    }
+
+    // otherwise normal join
     await joinRoom();
     console.log("[controller] joinRoom done");
+
   } catch (e) {
     console.error("[controller] joinRoom error", e);
     showError(e.message || "join failed");
@@ -420,6 +697,10 @@ if (data.phase === "voting") {
   $("answerBtn").addEventListener("click", () =>
   submitAnswer().catch(err => showError(err.message))
 );
+
+window.addEventListener("load", async () => {
+  await tryReconnect();
+});
 
 })();
 </script>
