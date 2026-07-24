@@ -477,12 +477,8 @@
       const data = await fetchJson(`${apiBase()}/rooms/${saved.roomCode}`);
       if (!data || !data.success) return false;
 
-      // Don't reconnect to a finished game
-      if (data.phase === "results") {
-        clearSession();
-        joinInfo.textContent = "That game has ended. Start a new room.";
-        return false;
-      }
+      // If results phase, still reconnect — host may replay and room will return to lobby
+      // (clearSession is intentionally omitted here so the player auto-resumes on replay)
 
       const existing = (data.players || []).find(p => p.id === saved.playerId);
       if (!existing) {
